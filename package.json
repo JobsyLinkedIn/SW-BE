@@ -1,0 +1,23 @@
+{
+  "name": "sw-be",
+  "version": "1.0.0",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "@typegoose/typegoose": "^12.11.0",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "mongoose": "^8.10.1",
+    "validator": "^13.12.0"
+  },
+  "devDependencies": {
+    "prettier": "^3.5.2"
+  }
+}
