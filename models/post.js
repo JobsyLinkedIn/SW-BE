@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-const Joi = require("joi")
+import Joi from "joi";
 
 const PostSchema = new mongoose.Schema({
     author: {
@@ -80,15 +80,49 @@ const PostSchema = new mongoose.Schema({
 
 const postModel = mongoose.model("Post", PostSchema);
 
-//Validate Create Post
+
+// Validate Create Post
 function validateCreatePost(obj) {
     const schema = Joi.object({
         content: Joi.string().trim().required().messages({
             "any.required": "Content is required.",
             "string.empty": "Content cannot be empty.",
         }),
-    })
+        links: Joi.array()
+            .items(
+                Joi.object({
+                    url: Joi.string().uri().required().messages({
+                        "any.required": "Each link must have a URL.",
+                        "string.uri": "Invalid URL format.",
+                    }),
+                    title: Joi.string().optional().allow(""),
+                })
+            )
+            .optional(),
+        taggedUsersIds: Joi.array()
+            .items(
+                Joi.string()
+                    .custom((value, helpers) => {
+                        if (!mongoose.Types.ObjectId.isValid(value)) {
+                            return helpers.error("any.invalid");
+                        }
+                        return value;
+                    }, "MongoDB ObjectId validation")
+            )
+            .optional()
+            .messages({ "any.invalid": "Invalid User ID in taggedUsersIds." }),
+        sharedPostId: Joi.string()
+            .custom((value, helpers) => {
+                if (value && !mongoose.Types.ObjectId.isValid(value)) {
+                    return helpers.error("any.invalid");
+                }
+                return value;
+            }, "MongoDB ObjectId validation")
+            .optional()
+            .messages({ "any.invalid": "Invalid sharedPostId." }),
+    });
+
     return schema.validate(obj);
 }
 
-module.exports = { postModel, validateCreatePost }
+export { postModel, validateCreatePost }
