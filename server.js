@@ -4,6 +4,7 @@ import cors from 'cors';
 import connectDB from './db.js';
 import authRoutes from './routes/auth.js'; // Import authentication routes
 import profileRoutes from './routes/profileRoutes.js'; // Import profile routes
+import postRoutes from './routes/postRoutes.js'; // Import post routes
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -18,6 +19,7 @@ connectDB();
 // Routes
 app.use('/api/auth', authRoutes); // Authentication routes
 app.use('/api/user/profile', profileRoutes); // Profile routes
+app.use('/api/posts', postRoutes)
 
 // Error handling middleware
 app.use((err, req, res, next) => {
