@@ -1,5 +1,12 @@
-const asyncHandler = require("express-async-handler");
-const { postModel, validateCreatePost } = require("../models/post");
+import asyncHandler from "express-async-handler";
+import jwt from "jsonwebtoken"
+import { postModel, validateCreatePost } from "../models/post.js";
+//import { getUserIdFromToken } from "../services/profileServices.js";
+
+const getUserIdFromToken = (token) => {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    return decoded.userId;
+};
 
 /**-------------------------------------------------------
  * 
@@ -9,46 +16,32 @@ const { postModel, validateCreatePost } = require("../models/post");
  * @access   Private [Only Logged in user]
  * 
  *-------------------------------------------------------*/
+const createPostCtrl = asyncHandler(async (req, res) => {
+    const token = req.headers.authorization?.split(" ")[1];
 
-module.exports.createPostCtrl = asyncHandler(async (req, res) => {
-    // 1. Validate Post Data
-    const { error } = validateCreatePost(req.body);
+    // TODO: Handle Uploaded Media (Implementation Pending)
+
+    // 1️⃣ Validate Post Data with Joi
+    const { error, value } = validateCreatePost(req.body);
     if (error) {
         return res.status(400).json({ message: error.details[0].message });
     }
 
-    // 2. Validate Tagged Users
-    const taggedUsersIds = req.body.taggedUsersIds || [];
-    for (let userId of taggedUsersIds) {
-        if (!mongoose.Types.ObjectId.isValid(userId)) {
-            return res.status(400).json({ message: "Invalid User ID in taggedUsersIds" });
-        }
-    }
+    // 2️⃣ Extract validated fields from Joi
+    const { content, taggedUsersIds = [], links = [], sharedPostId = null } = value;
 
-    // 3. Validate Shared Post ID (if provided)
-    const sharedPostId = req.body.sharedPostId || null;
-    if (sharedPostId && !mongoose.Types.ObjectId.isValid(sharedPostId)) {
-        return res.status(400).json({ message: "Invalid sharedPostId" });
-    }
-
-    // 4. Validate Links (if provided)
-    const links = req.body.links || [];
-    for (let link of links) {
-        if (!link.url || typeof link.url !== "string") {
-            return res.status(400).json({ message: "Invalid link URL" });
-        }
-        link.title = link.title || link.url; // Default title to URL if missing
-    }
-
-    // 5. Create and Save the Post
+    // 3️⃣ Create and Save the Post
     const post = await postModel.create({
-        author: req.user.id, // req.user is set from authentication middleware
-        content: req.body.content,
+        author: getUserIdFromToken(token), // Get user ID from token
+        content,
         taggedUsers: taggedUsersIds,
-        links: links,
-        sharedPost: sharedPostId
+        links,
+        sharedPost: sharedPostId,
     });
 
-    // 6. Return Response
+    // 4️⃣ Return Response
     res.status(201).json({ message: "Post created successfully", createdPost: post });
 });
+
+export { createPostCtrl };
+
