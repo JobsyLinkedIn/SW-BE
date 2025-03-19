@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+const Joi = require("joi")
 
 const PostSchema = new mongoose.Schema({
     author: {
@@ -79,4 +80,14 @@ const PostSchema = new mongoose.Schema({
 
 const postModel = mongoose.model("Post", PostSchema);
 
-module.exports = { postModel }
+//Validate Create Post
+function validateCreatePost(obj) {
+    const schema = Joi.object({
+        content: Joi.string().trim().required().messages({
+            "any.required": "Content is required.",
+            "string.empty": "Content cannot be empty.",
+        }),
+    })
+}
+
+module.exports = { postModel, validateCreatePost }
