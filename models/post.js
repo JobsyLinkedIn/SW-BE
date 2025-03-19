@@ -88,6 +88,7 @@ function validateCreatePost(obj) {
             "string.empty": "Content cannot be empty.",
         }),
     })
+    return schema.validate(obj);
 }
 
 module.exports = { postModel, validateCreatePost }
