@@ -5,7 +5,7 @@ import User from "../models/user.js";
 import UserDetails from "../models/user_details.js";
 import Profile from "../models/profileModel.js";
 
-import { postModel as Post, validateCreatePost } from "../models/post.js";
+import { postModel as Post, validateCreatePost, validateEditPost } from "../models/post.js";
 //import { getUserIdFromToken } from "../services/profileServices.js";
 import { getUserIdFromToken } from "../utils/auth.js"
 
@@ -75,7 +75,7 @@ const createPostCtrl = asyncHandler(async (req, res) => {
  * 
  *-------------------------------------------------------*/
 const getSinglePostCtrl = asyncHandler(async (req, res) => {
-    let postId = req.params.id;
+    const postId = req.params.id;
     //TODO: Add MiddleWare: for ObjectId Validation
     if (!mongoose.Types.ObjectId.isValid(postId)) {
         return res.status(400).json({ message: "Invalid Post ID" });
@@ -147,6 +147,72 @@ const getFeedCtrl = asyncHandler(async (req, res) => {
     });
 });
 
+/**-------------------------------------------------------
+ * 
+ * @desc     Edit Post
+ * @route   /api/posts/:id
+ * @method   PUT
+ * @access   Private [Only The Owner of Post]
+ * 
+ *-------------------------------------------------------*/
+const editPostCtrl = asyncHandler(async (req, res) => {
+    //TODO : Add MiddleWare to Handle Token Verifecation and Toekn Payload Extraction
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+        return res.status(401).json({ message: "Unauthorized: No token provided" });
+    }
+    const token = authHeader.split(" ")[1];
+    const userId = getUserIdFromToken(token)
 
-export { createPostCtrl, getSinglePostCtrl, getFeedCtrl };
+    const postId = req.params.id;
+    //Make sure the post exists
+    const post = await Post
+        .findById(postId).populate("")
+        .populate("_id")
+        .populate("taggedUsers", "name")
+    if (!post) {
+        return res.status(404).json({ message: "Post not found" });
+    }
+    //Ensure Only Author Can Edit
+    if (post.author.toString() !== userId) {
+        return res.status(403).json({ message: "You are not authorized to edit this post" });
+    }
+    // ✅ Validate Input Data (Joi Schema)
+    const { error, value } = validateEditPost(req.body);
+    if (error) {
+        return res.status(400).json({ message: error.details[0].message });
+    }
+
+    const { content, taggedUsersIds = [], links = [] } = value;
+    // Validate Tagged Users Exist
+    if (taggedUsersIds.length > 0) {
+        const validUsersCount = await User.countDocuments({ _id: { $in: taggedUsersIds } });
+        if (validUsersCount !== taggedUsersIds.length) {
+            return res.status(400).json({ message: "One or more tagged users do not exist" });
+        }
+    }
+    // Update Post
+    const updatedPost = await Post.findByIdAndUpdate(
+        postId,
+        {
+            $set: {
+                content: content,
+                taggedUsers: taggedUsersIds,
+                links: links,
+            },
+        },
+        { new: true } // Return updated document
+    )
+        .populate("author", "name profilePicture")
+        .populate("taggedUsers", "name profilePicture")
+        .populate("sharedPost");
+
+    // Return Response
+    res.status(200).json({ message: "Post updated successfully", updatedPost });
+
+})
+
+
+
+export { createPostCtrl, getSinglePostCtrl, getFeedCtrl, editPostCtrl };
 
