@@ -1,5 +1,5 @@
 import express from "express";
-import { createPostCtrl, getFeedCtrl, getSinglePostCtrl, editPostCtrl } from "../controllers/postsController.js"
+import { createPostCtrl, getFeedCtrl, getSinglePostCtrl, editPostCtrl, likePostCtrl } from "../controllers/postsController.js"
 const router = express.Router()
 
 // api/posts
@@ -11,5 +11,9 @@ router.route("/")
 router.route("/:id")
     .get(getSinglePostCtrl)
     .put(editPostCtrl)
+
+// api/posts/like/:id
+router.route("/like/:id")
+    .put(likePostCtrl)
 
 export default router

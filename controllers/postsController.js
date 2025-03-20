@@ -46,12 +46,21 @@ const createPostCtrl = asyncHandler(async (req, res) => {
     }
     // validate SharedPost is Actual Post In db
     if (sharedPostId) {
-        const sharedPost = await Post.find({ _id: sharedPostId });
-        if (sharedPost.length === 0) {
-            return res.status(404).json({ message: "Not Found Shared Post" });
-        }
-    }
+        const sharedPost = await Post.findById(sharedPostId);
 
+        if (!sharedPost) {
+            return res.status(404).json({ message: "Shared post not found" });
+        }
+
+        // ✅ Add the user to the shares array & increment the count
+        await Post.findByIdAndUpdate(
+            sharedPostId,
+            {
+                $addToSet: { shares: userId },  // Prevents duplicates
+                $inc: { sharesCount: 1 }       // Keeps a numeric count
+            }
+        );
+    }
     // 3️⃣ Create and Save the Post
     const post = await Post.create({
         author: getUserIdFromToken(token), // Get user ID from token
@@ -212,7 +221,52 @@ const editPostCtrl = asyncHandler(async (req, res) => {
 
 })
 
+/**-------------------------------------------------------
+ * 
+ * @desc     Like/Unlike Post 
+ * @route   /api/posts/like/:postId
+ * @method   PUT
+ * @access   Private [Only Logged in User]
+ * 
+ *-------------------------------------------------------*/
+const likePostCtrl = asyncHandler(async (req, res) => {
+    const postId = req.params.id;
+    //const userId = req.user.id; // Extracted from authenticated request
+    //TODO : Add MiddleWare to Handle Token Verifecation and Toekn Payload Extraction
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+        return res.status(401).json({ message: "Unauthorized: No token provided" });
+    }
+    const token = authHeader.split(" ")[1];
+    const userId = getUserIdFromToken(token)
 
+    // ✅ Check if the post exists
+    const post = await Post.findById(postId);
+    if (!post) {
+        return res.status(404).json({ message: "Post not found" });
+    }
 
-export { createPostCtrl, getSinglePostCtrl, getFeedCtrl, editPostCtrl };
+    // ✅ Check if the user has already liked the post
+    const hasLiked = post.likes.includes(userId);
+
+    if (hasLiked) {
+        // 👎 Remove Like
+        await Post.findByIdAndUpdate(postId, {
+            $pull: { likes: userId },
+            $inc: { likesCount: -1 }
+        });
+
+        return res.status(200).json({ message: "Post unliked successfully" });
+    } else {
+        // 👍 Add Like
+        await Post.findByIdAndUpdate(postId, {
+            $addToSet: { likes: userId },
+            $inc: { likesCount: 1 }
+        });
+
+        return res.status(200).json({ message: "Post liked successfully" });
+    }
+});
+
+export { createPostCtrl, getSinglePostCtrl, getFeedCtrl, editPostCtrl, likePostCtrl };
 
