@@ -74,6 +74,9 @@ const PostSchema = new mongoose.Schema({
         ref: "Post", // References the original post being shared
         default: null,
     },
+    likesCount: { type: Number, default: 0 },
+    commentsCount: { type: Number, default: 0 },
+    sharesCount: { type: Number, default: 0 },
 },
     { timestamps: true }
 );
