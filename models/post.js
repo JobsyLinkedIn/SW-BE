@@ -11,6 +11,8 @@ const PostSchema = new mongoose.Schema({
         type: String,
         required: true,
         trim: true,
+        minlength: 1,
+        maxlength: 3000,
     },
     media: [
         {
@@ -87,7 +89,7 @@ const postModel = mongoose.model("Post", PostSchema);
 // Validate Create Post
 function validateCreatePost(obj) {
     const schema = Joi.object({
-        content: Joi.string().trim().required().messages({
+        content: Joi.string().trim().min(1).max(3000).required().messages({
             "any.required": "Content is required.",
             "string.empty": "Content cannot be empty.",
         }),
@@ -127,5 +129,31 @@ function validateCreatePost(obj) {
 
     return schema.validate(obj);
 }
+const validateEditPost = (data) => {
+    const schema = Joi.object({
+        content: Joi.string().trim().min(1).max(2000).optional(),
+        taggedUsersIds: Joi.array().items(
+            Joi.string()
+                .custom((value, helpers) => {
+                    if (!mongoose.Types.ObjectId.isValid(value)) {
+                        return helpers.error("any.invalid");
+                    }
+                    return value;
+                }, "MongoDB ObjectId validation")
+        ).optional(),
+        links: Joi.array()
+            .items(
+                Joi.object({
+                    url: Joi.string().uri().required().messages({
+                        "any.required": "Each link must have a URL.",
+                        "string.uri": "Invalid URL format.",
+                    }),
+                    title: Joi.string().optional().allow(""),
+                })
+            )
+            .optional(),
+    });
 
-export { postModel, validateCreatePost }
+    return schema.validate(data);
+}
+export { postModel, validateCreatePost, validateEditPost }
