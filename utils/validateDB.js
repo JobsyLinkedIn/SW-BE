@@ -8,7 +8,7 @@ import mongoose from "mongoose";
  */
 async function validateDocumentsExistence(model, docIds) {
     if (docIds.length === 0) {
-        return false;
+        return true;
     }
 
     const existingDocsCount = await model.countDocuments({ _id: { $in: docIds } });
@@ -21,8 +21,12 @@ async function validateDocumentsExistence(model, docIds) {
  * @returns {boolean} - Returns true if all IDs are valid ObjectIds, otherwise false.
  */
 function areValidObjectIds(ids) {
+
     if (!Array.isArray(ids) || ids.length === 0) {
         return false;
+    }
+    if (ids.length === 0) {
+        return true;
     }
     return ids.every(id => mongoose.Types.ObjectId.isValid(id));
 }
