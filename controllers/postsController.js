@@ -12,7 +12,7 @@ import { commentModel as Comment } from "../models/comments.js";
 import { getUserIdFromToken } from "../utils/auth.js"
 
 
-import { createPostService } from "../services/postService.js";
+import { createPostService, getSinglePostService, editPostService } from "../services/postService.js";
 
 /**-------------------------------------------------------
  * 
@@ -31,7 +31,6 @@ const createPostCtrl = asyncHandler(async (req, res) => {
     }
 });
 
-
 /**-------------------------------------------------------
  * 
  * @desc     Get Single Post
@@ -41,25 +40,24 @@ const createPostCtrl = asyncHandler(async (req, res) => {
  * 
  *-------------------------------------------------------*/
 const getSinglePostCtrl = asyncHandler(async (req, res) => {
-    const postId = req.params.id;
-    //TODO: Add MiddleWare: for ObjectId Validation
-    if (!mongoose.Types.ObjectId.isValid(postId)) {
-        return res.status(400).json({ message: "Invalid Post ID" });
+    try {
+        const postId = req.params.id;
+
+        // Validate ObjectId format
+        if (!mongoose.Types.ObjectId.isValid(postId)) {
+            return res.status(400).json({ message: "Invalid Post ID" });
+        }
+
+        // Call service function
+        const post = await getSinglePostService(postId);
+
+        res.status(200).json(post);
+    } catch (error) {
+        res.status(404).json({ message: error.message });
     }
-
-    const post = await Post
-        .findById(postId)
-        .populate("author", "name profilePicture")
-        .populate("taggedUsers", "name")
-
-    if (!post) {
-        return res.status(404).json({ message: "Post not found" });
-    }
-
-    res.status(200).json({
-        ...post.toObject()
-    });
 });
+
+
 
 
 /**-------------------------------------------------------
@@ -113,6 +111,7 @@ const getFeedCtrl = asyncHandler(async (req, res) => {
     });
 });
 
+
 /**-------------------------------------------------------
  * 
  * @desc     Edit Post
@@ -122,61 +121,30 @@ const getFeedCtrl = asyncHandler(async (req, res) => {
  * 
  *-------------------------------------------------------*/
 const editPostCtrl = asyncHandler(async (req, res) => {
-    //TODO : Add MiddleWare to Handle Token Verifecation and Toekn Payload Extraction
-    const authHeader = req.headers.authorization;
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
-        return res.status(401).json({ message: "Unauthorized: No token provided" });
-    }
-    const token = authHeader.split(" ")[1];
-    const userId = getUserIdFromToken(token)
-
-    const postId = req.params.id;
-    //Make sure the post exists
-    const post = await Post
-        .findById(postId).populate("")
-        .populate("_id")
-        .populate("taggedUsers", "name")
-    if (!post) {
-        return res.status(404).json({ message: "Post not found" });
-    }
-    //Ensure Only Author Can Edit
-    if (post.author.toString() !== userId) {
-        return res.status(403).json({ message: "You are not authorized to edit this post" });
-    }
-    // ✅ Validate Input Data (Joi Schema)
-    const { error, value } = validateEditPost(req.body);
-    if (error) {
-        return res.status(400).json({ message: error.details[0].message });
-    }
-
-    const { content, taggedUsersIds = [], links = [] } = value;
-    // Validate Tagged Users Exist
-    if (taggedUsersIds.length > 0) {
-        const validUsersCount = await User.countDocuments({ _id: { $in: taggedUsersIds } });
-        if (validUsersCount !== taggedUsersIds.length) {
-            return res.status(400).json({ message: "One or more tagged users do not exist" });
+    try {
+        // Extract and validate token
+        const authHeader = req.headers.authorization;
+        if (!authHeader || !authHeader.startsWith("Bearer ")) {
+            return res.status(401).json({ message: "Unauthorized: No token provided" });
         }
+        const token = authHeader.split(" ")[1];
+        const userId = getUserIdFromToken(token);
+
+        // Extract post ID and request body
+        const postId = req.params.id;
+        const postData = { ...req.body, userId };
+
+        // Call service function
+        const updatedPost = await editPostService(postId, postData);
+
+        // Return response
+        res.status(200).json({ message: "Post updated successfully", updatedPost });
+    } catch (error) {
+        res.status(400).json({ message: error.message });
     }
-    // Update Post
-    const updatedPost = await Post.findByIdAndUpdate(
-        postId,
-        {
-            $set: {
-                content: content,
-                taggedUsers: taggedUsersIds,
-                links: links,
-            },
-        },
-        { new: true } // Return updated document
-    )
-        .populate("author", "name profilePicture")
-        .populate("taggedUsers", "name profilePicture")
-        .populate("sharedPost");
+});
 
-    // Return Response
-    res.status(200).json({ message: "Post updated successfully", updatedPost });
 
-})
 
 /**-------------------------------------------------------
  * 
