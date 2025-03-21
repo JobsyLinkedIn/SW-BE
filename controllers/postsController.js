@@ -16,7 +16,7 @@ import {
     createPostService, getSinglePostService, editPostService,
     likePostService, addCommentService, deleteCommentService, editCommentService,
     getPostCommentsService, getPostLikesService, getPostSharesService
-
+    , sharePostService
 } from "../services/postService.js";
 
 /**-------------------------------------------------------
@@ -28,13 +28,22 @@ import {
  * 
  *-------------------------------------------------------*/
 const createPostCtrl = asyncHandler(async (req, res) => {
-    try {
-        const post = await createPostService(req);
-        res.status(201).json({ message: "Post created successfully", createdPost: post });
-    } catch (error) {
-        res.status(400).json({ message: error.message });
+    //TODO : Add MiddleWare to Handle Token Verifecation and Toekn Payload Extraction
+    // Extract and validate token
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+        return res.status(401).json({ message: "Unauthorized: No token provided" });
     }
+    const token = authHeader.split(" ")[1];
+    const userId = getUserIdFromToken(token);
+
+    const { content, taggedUsersIds = [], links = [] } = req.body;
+
+    const post = await createPostService({ userId, content, taggedUsersIds, links });
+
+    res.status(201).json({ message: "Post created successfully", post });
 });
+
 
 /**-------------------------------------------------------
  * 
@@ -345,9 +354,41 @@ const getPostSharesCtrl = asyncHandler(async (req, res) => {
     });
 });
 
+/**-------------------------------------------------------
+ * 
+ * @desc     Share  Post
+ * @route    /api/posts/:id/shares
+ * @method   POST
+ * @access   Private [Only Logged in User]
+ * 
+ *-------------------------------------------------------*/
+const sharePostCtrl = asyncHandler(async (req, res) => {
+
+    //TODO : Add MiddleWare to Handle Token Verifecation and Toekn Payload Extraction
+    // Extract and validate token
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+        return res.status(401).json({ message: "Unauthorized: No token provided" });
+    }
+    const token = authHeader.split(" ")[1];
+    const userId = getUserIdFromToken(token);
+    const sharedPostId = req.params.id;
+    const { content = "", taggedUsersIds = [] } = req.body;
+
+    const sharedPost = await sharePostService({ userId, sharedPostId, content, taggedUsersIds });
+
+    res.status(201).json({ message: "Post shared successfully", sharedPost });
+});
 
 
-export { createPostCtrl, getSinglePostCtrl, getFeedCtrl, editPostCtrl, likePostCtrl, addCommentCtrl, deleteCommentCtrl, editCommentCtrl, getPostCommentsCtrl, getPostLikesCtrl, getPostSharesCtrl };
+
+
+export {
+    createPostCtrl, getSinglePostCtrl, getFeedCtrl,
+    editPostCtrl, likePostCtrl, addCommentCtrl, deleteCommentCtrl,
+    editCommentCtrl, getPostCommentsCtrl,
+    getPostLikesCtrl, getPostSharesCtrl, sharePostCtrl,
+};
 
 
 
