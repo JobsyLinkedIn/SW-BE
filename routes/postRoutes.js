@@ -1,5 +1,5 @@
 import express from "express";
-import { createPostCtrl, getFeedCtrl, getSinglePostCtrl, editPostCtrl, likePostCtrl, addCommentCtrl, deleteCommentCtrl, editCommentCtrl, getPostCommentsCtrl, getPostLikesCtrl, getPostSharesCtrl } from "../controllers/postsController.js"
+import { createPostCtrl, getFeedCtrl, getSinglePostCtrl, editPostCtrl, likePostCtrl, addCommentCtrl, deleteCommentCtrl, editCommentCtrl, getPostCommentsCtrl, getPostLikesCtrl, getPostSharesCtrl, sharePostCtrl } from "../controllers/postsController.js"
 const router = express.Router()
 
 // api/posts
@@ -28,5 +28,11 @@ router.get("/:id/comments", getPostCommentsCtrl);
 // Route to fetch users who make like to  a specific post with pagination
 router.get("/:id/likes", getPostLikesCtrl);
 // Route to fetch users who make share to  a specific post with pagination
-router.get("/:id/shares", getPostSharesCtrl);
+router.route("/:id/shares")
+    .get(getPostSharesCtrl)
+    .post(sharePostCtrl)
+
+
+
+
 export default router
