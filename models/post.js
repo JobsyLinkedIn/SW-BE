@@ -9,9 +9,7 @@ const PostSchema = new mongoose.Schema({
     },
     content: {
         type: String,
-        required: true,
         trim: true,
-        minlength: 1,
         maxlength: 3000,
     },
     media: [
@@ -65,12 +63,7 @@ const PostSchema = new mongoose.Schema({
             ref: "User",
         }
         ],
-    savedBy: [
-        {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: "User",
-        },
-    ],
+    savesCount: { type: Number, default: 0 },
     sharedPost: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "Post", // References the original post being shared
@@ -89,7 +82,7 @@ const postModel = mongoose.model("Post", PostSchema);
 // Validate Create Post
 function validateCreatePost(obj) {
     const schema = Joi.object({
-        content: Joi.string().trim().min(1).max(3000).required().messages({
+        content: Joi.string().trim().max(3000).required().messages({
             "any.required": "Content is required.",
             "string.empty": "Content cannot be empty.",
         }),
@@ -104,7 +97,8 @@ function validateCreatePost(obj) {
                 })
             )
             .optional(),
-        taggedUsersIds: Joi.array()
+        taggedUsersIds: Joi.array().optional(),
+        /*
             .items(
                 Joi.string()
                     .custom((value, helpers) => {
@@ -114,8 +108,10 @@ function validateCreatePost(obj) {
                         return value;
                     }, "MongoDB ObjectId validation")
             )
-            .optional()
+            
+        
             .messages({ "any.invalid": "Invalid User ID in taggedUsersIds." }),
+            */
         sharedPostId: Joi.string()
             .custom((value, helpers) => {
                 if (value && !mongoose.Types.ObjectId.isValid(value)) {
@@ -131,7 +127,7 @@ function validateCreatePost(obj) {
 }
 const validateEditPost = (data) => {
     const schema = Joi.object({
-        content: Joi.string().trim().min(1).max(2000).optional(),
+        content: Joi.string().trim().max(2000).optional(),
         taggedUsersIds: Joi.array().items(
             Joi.string()
                 .custom((value, helpers) => {
