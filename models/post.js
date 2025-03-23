@@ -82,7 +82,7 @@ const postModel = mongoose.model("Post", PostSchema);
 // Validate Create Post
 function validateCreatePost(obj) {
     const schema = Joi.object({
-        content: Joi.string().trim().max(3000).required().messages({
+        content: Joi.string().trim().max(3000).messages({
             "any.required": "Content is required.",
             "string.empty": "Content cannot be empty.",
         }),
