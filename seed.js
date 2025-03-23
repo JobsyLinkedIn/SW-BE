@@ -1,7 +1,8 @@
-import 'dotenv/config'; 
+import 'dotenv/config';
 import mongoose from 'mongoose';
 import seedUsers from "./seeds/user.js"
 import seedCompanies from "./seeds/company.js"
+import seedPosts from "./seeds/post.js"
 const MONGO_URI = process.env.MONGO_URI;
 
 const seedAll = async () => {
@@ -13,9 +14,10 @@ const seedAll = async () => {
     await mongoose.connect(MONGO_URI);
     console.log('Connected to MongoDB');
 
-    await seedUsers(); 
+    await seedUsers();
     await seedCompanies();
-    
+    await seedPosts();
+
     console.log('All entities seeded successfully!');
   } catch (err) {
     console.error('Error seeding data:', err);
