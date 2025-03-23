@@ -3,9 +3,10 @@ import mongoose from "mongoose";
 import { postModel as Post, validateCreatePost, validateEditPost } from "../models/post.js";
 import { commentModel as Comment } from "../models/comments.js";
 import User from "../models/user.js";
+import UserDetails from "../models/user_details.js";
+import Profile from "..//models/profileModel.js"
 import { getUserIdFromToken } from "../utils/auth.js";
 import { validateDocumentsExistence, areValidObjectIds } from "../utils/validateDB.js"
-import UserDetails from "../models/user_details.js"
 
 const createPostService = async ({ userId, content, taggedUsersIds = [], links = [] }) => {
 
@@ -47,6 +48,49 @@ const getSinglePostService = async (postId) => {
 
     return post.toObject();
 };
+
+
+
+/**
+ * @desc Get Feed Posts
+ * @param {String} userId - The ID of the logged-in user
+ * @param {Number} page - Current page number (for pagination)
+ * @param {Number} limit - Number of posts per page
+ * @returns {Object} Feed posts with pagination data
+ */
+const getFeedService = async (userId, page = 1, limit = 10) => {
+    // Fetch user profile to get followers and connections
+    const [userProfile, userDetails] = await Promise.all([
+        Profile.findOne({ userId }).select("followers"),
+        UserDetails.findOne({ user: userId }).select("connections"),
+    ]);
+
+    const followedUsers = userProfile?.followers || [];
+    const connections = userDetails?.connections || [];
+    const feedUsers = [...followedUsers, ...connections, userId]; // Include self-posts
+
+    // Pagination calculations
+    const skip = (page - 1) * limit;
+
+    // Fetch paginated posts
+    const feedPosts = await Post.find({ author: { $in: feedUsers } })
+        .populate("author", "name profilePicture")
+        .populate("taggedUsers", "name")
+        .sort({ createdAt: -1 }) // Latest posts first
+        .skip(skip)
+        .limit(limit);
+
+    // Get total count for pagination metadata
+    const totalPosts = await Post.countDocuments({ author: { $in: feedUsers } });
+
+    return {
+        posts: feedPosts,
+        currentPage: page,
+        totalPages: Math.ceil(totalPosts / limit),
+        totalPosts,
+    };
+};
+
 
 
 const editPostService = async (postId, { content, taggedUsersIds = [], links = [], userId }) => {
@@ -350,62 +394,6 @@ const sharePostService = async ({ userId, sharedPostId, content = "", taggedUser
     return newPost;
 };
 
-const savePostService = async (userId, postId) => {
-    // Validate IDs
-    if (!areValidObjectIds([userId, postId])) {
-        throw { status: 400, message: "Invalid ID(s) provided" };
-    }
-
-    // Check if post exists
-    if (!validateDocumentsExistence([postId])) {
-        throw { status: 404, message: "Post not found" };
-    }
-
-    // Update userDetails to save post
-    const updatedUserDetails = await UserDetails.findOneAndUpdate(
-        { user: userId },
-        { $addToSet: { savedPosts: postId } }, // Prevent duplicates
-        { new: true, upsert: true } // Create document if not found
-    );
-
-    return updatedUserDetails;
-};
-
-const unsavePostService = async (userId, postId) => {
-    // Validate IDs
-    if (!areValidObjectIds([userId, postId])) {
-        throw { status: 400, message: "Invalid ID(s) provided" };
-    }
-
-    // Check if post exists
-    if (!validateDocumentsExistence([postId])) {
-        throw { status: 404, message: "Post not found" };
-    }
-
-    // Update userDetails to remove saved post
-    const updatedUserDetails = await UserDetails.findOneAndUpdate(
-        { user: userId },
-        { $pull: { savedPosts: postId } },
-        { new: true }
-    );
-
-    return updatedUserDetails;
-};
-
-const getSavedPostsService = async (userId, page = 1, limit = 10) => {
-    if (!areValidObjectIds([userId])) {
-        throw { status: 400, message: "Invalid user ID" };
-    }
-
-    const userDetails = await UserDetails.findOne({ user: userId })
-        .populate({
-            path: "savedPosts",
-            select: "author content createdAt",
-            options: { skip: (page - 1) * limit, limit: parseInt(limit), sort: { createdAt: -1 } },
-        });
-
-    return userDetails?.savedPosts || [];
-};
 
 
 
@@ -414,5 +402,5 @@ export {
     likePostService, addCommentService, deleteCommentService,
     editCommentService, getPostCommentsService,
     getPostLikesService, getPostSharesService,
-    sharePostService
+    sharePostService, getFeedService
 };

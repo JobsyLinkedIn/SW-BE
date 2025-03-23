@@ -16,7 +16,7 @@ import {
     createPostService, getSinglePostService, editPostService,
     likePostService, addCommentService, deleteCommentService, editCommentService,
     getPostCommentsService, getPostLikesService, getPostSharesService
-    , sharePostService
+    , sharePostService, getFeedService
 } from "../services/postService.js";
 
 /**-------------------------------------------------------
@@ -73,58 +73,30 @@ const getSinglePostCtrl = asyncHandler(async (req, res) => {
 
 
 
-
-/**-------------------------------------------------------
- * 
+/**
  * @desc     Get Feed Posts
- * @route   /api/posts/
+ * @route    /api/posts/
  * @method   GET
  * @access   Private [Only Logged in user]
- * 
- *-------------------------------------------------------*/
+ */
 const getFeedCtrl = asyncHandler(async (req, res) => {
-    //TODO : Add MiddleWare to Handle Token Verifecation and Toekn Payload Extraction
+    // Extract and validate token
     if (!req.headers.authorization) {
         return res.status(401).json({ message: "Unauthorized" });
     }
-    const token = req.headers.authorization?.split(" ")[1];
-    const userId = getUserIdFromToken(token)
 
-    // Get the list of followed users 
-    const userProfile = await Profile.findOne({ userId: userId }).select("followers") || [];
+    const token = req.headers.authorization.split(" ")[1];
+    const userId = getUserIdFromToken(token);
 
-    // Get the list of connections 
-    const userDetails = await UserDetails.findOne({ user: userId }).select("connections") || [];
+    // Extract query parameters (pagination)
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
 
-    const followedUsers = userProfile.followers || [];
-    const connections = userDetails.connections || [];
-    const feedUsers = [...followedUsers, ...connections, userId]; // Include self-posts
+    // Call the service to get feed posts
+    const feedData = await getFeedService(userId, page, limit);
 
-    // 📌 Pagination Parameters
-    const page = parseInt(req.query.page) || 1; // Default: Page 1
-    const limit = parseInt(req.query.limit) || 10; // Default: 10 posts per page
-    const skip = (page - 1) * limit;
-
-    // Fetch paginated posts
-    const feedPosts = await Post
-        .find({ author: { $in: feedUsers } })
-        .populate("author", "name profilePicture")
-        .populate("taggedUsers", "name")
-        .sort({ createdAt: -1 }) // Latest posts first
-        .skip(skip) // Skip previous pages
-        .limit(limit); // Limit posts per page
-
-    // Get total count for pagination metadata
-    const totalPosts = await Post.countDocuments({ author: { $in: feedUsers } });
-
-    res.status(200).json({
-        posts: feedPosts,
-        currentPage: page,
-        totalPages: Math.ceil(totalPosts / limit),
-        totalPosts,
-    });
+    res.status(200).json(feedData);
 });
-
 
 /**-------------------------------------------------------
  * 
