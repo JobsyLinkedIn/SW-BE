@@ -12,23 +12,27 @@ router.route("/:id")
     .get(getSinglePostCtrl)
     .put(editPostCtrl)
 
-// api/posts/like/:id
-router.route("/like/:id")
+
+
+// api/posts/postId/likes
+router.route("/:postId/likes")
     .put(likePostCtrl)
+    .get(getPostLikesCtrl); // Route to fetch users who make like to  a specific post with pagination
 
-// api/posts/comment/:id
-router.route("/comment/:id")
-    .post(addCommentCtrl)
-    .delete(deleteCommentCtrl)
-    .put(editCommentCtrl)
 
-// Route to fetch comments of a specific post with pagination
-router.get("/:id/comments", getPostCommentsCtrl);
+// /api/posts/:postId/comments
+router.route("/:postId/comments")
+    .post(addCommentCtrl) // Add a new comment to a post
+    .get(getPostCommentsCtrl); // Get comments of a post
+// api/posts/comment/:commentId
+router.route("/comments/:commentId")
+    .put(editCommentCtrl)  // Edit a comment
+    .delete(deleteCommentCtrl); // Delete a comment
 
-// Route to fetch users who make like to  a specific post with pagination
-router.get("/:id/likes", getPostLikesCtrl);
+
+
 // Route to fetch users who make share to  a specific post with pagination
-router.route("/:id/shares")
+router.route("/:postId/shares")
     .get(getPostSharesCtrl)
     .post(sharePostCtrl)
 

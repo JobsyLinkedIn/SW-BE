@@ -140,7 +140,7 @@ const editPostCtrl = asyncHandler(async (req, res) => {
  * 
  *-------------------------------------------------------*/
 const likePostCtrl = asyncHandler(async (req, res) => {
-    const postId = req.params.id;
+    const postId = req.params.postId;
 
     const authHeader = req.headers.authorization;
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
@@ -168,7 +168,7 @@ const likePostCtrl = asyncHandler(async (req, res) => {
  *-------------------------------------------------------*/
 
 const addCommentCtrl = asyncHandler(async (req, res) => {
-    const postId = req.params.id;
+    const postId = req.params.postId;
     const { content = null, taggedUsersIds = [] } = req.body;
 
     // Extract user ID from token
@@ -194,7 +194,7 @@ const addCommentCtrl = asyncHandler(async (req, res) => {
  * 
  *-------------------------------------------------------*/
 const deleteCommentCtrl = asyncHandler(async (req, res) => {
-    const commentId = req.params.id;
+    const commentId = req.params.commentId;
 
     // ✅ Extract user ID from token
     const authHeader = req.headers.authorization;
@@ -224,7 +224,7 @@ const deleteCommentCtrl = asyncHandler(async (req, res) => {
 
 
 const editCommentCtrl = asyncHandler(async (req, res) => {
-    const commentId = req.params.id;
+    const commentId = req.params.commentId;
     const { content = null, taggedUsersIds = [] } = req.body;
 
     // ✅ Extract user ID from token
@@ -261,7 +261,7 @@ const getPostCommentsCtrl = asyncHandler(async (req, res) => {
     const token = authHeader.split(" ")[1];
     const userId = getUserIdFromToken(token);
 
-    const postId = req.params.id;
+    const postId = req.params.postId;
     let { page = 1, limit = 10 } = req.query;
 
     // Convert to numbers
@@ -284,7 +284,7 @@ const getPostCommentsCtrl = asyncHandler(async (req, res) => {
  */
 
 const getPostLikesCtrl = asyncHandler(async (req, res) => {
-    const postId = req.params.id;
+    const postId = req.params.postId;
     let { page = 1, limit = 10 } = req.query;
 
     // Convert to numbers
@@ -310,7 +310,7 @@ const getPostLikesCtrl = asyncHandler(async (req, res) => {
  */
 
 const getPostSharesCtrl = asyncHandler(async (req, res) => {
-    const postId = req.params.id;
+    const postId = req.params.postId;
     let { page = 1, limit = 10 } = req.query;
 
     // Convert to numbers
@@ -344,7 +344,7 @@ const sharePostCtrl = asyncHandler(async (req, res) => {
     }
     const token = authHeader.split(" ")[1];
     const userId = getUserIdFromToken(token);
-    const sharedPostId = req.params.id;
+    const sharedPostId = req.params.postId;
     const { content = "", taggedUsersIds = [] } = req.body;
 
     const sharedPost = await sharePostService({ userId, sharedPostId, content, taggedUsersIds });
