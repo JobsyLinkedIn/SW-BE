@@ -1,23 +1,36 @@
 import User from '../../models/user.js';
 import UserDetails from '../../models/user_details.js';
+import Company from '../../models/company.js';
 
-export const search_user_service = async (name, company, industry) => {
-  const query = {};
-  const query_details = {};
+export const search_user_service = async (name, companyName, industry) => {
+  let query = [];
+
   if (name) {
-    query.name = new RegExp(name, 'i');
+    query.push({ name: new RegExp(name, 'i') });
   }
-  if (company) {
-    query.company = new RegExp(company, 'i');
+
+  if (companyName) {
+    const company = await Company.findOne({ name: new RegExp(companyName, 'i') });
+
+    if (company) {
+      query.push({ _id: { $in: company.followers } }); 
+    } else {
+      return [];
+    }
   }
+
+  
   if (industry) {
-    query_details.industry = new RegExp(industry, 'i');
+    const userDetails = await UserDetails.find({ industry: new RegExp(industry, 'i') });
+    const userIds = userDetails.map(detail => detail.user);
+    
+    if (userIds.length > 0) {
+      query.push({ _id: { $in: userIds } });
+    }
   }
-  if (query) {
-    return await User.find(query);
-  }
-  if (query_details) {
-    return await UserDetails.find(query_details);
-  }
+
+  return await User.find({ $or: query });
+
 };
+
 export default search_user_service;
