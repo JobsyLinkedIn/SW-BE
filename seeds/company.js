@@ -10,6 +10,7 @@ const seedCompanies = async () => {
     const existingCompanies = await Company.find();
     if (existingCompanies.length > 0) {
       console.log('Companies already exist. Seeding skipped.');
+      return existingCompanies;
     } else {
       const companies = [
         {
@@ -30,30 +31,9 @@ const seedCompanies = async () => {
 
       const insertedCompanies = await Company.insertMany(companies);
       console.log('Companies seeded successfully!');
-
-      const users = await User.find(); // Fetch all existing users
-
-      // Add some followers for each company (for demonstration purposes)
-      if (users.length > 0) {
-        for (const company of insertedCompanies) {
-          // Randomly assign 1-3 followers from the existing users
-          const randomFollowers = users
-            .sort(() => 0.5 - Math.random()) // Shuffle users
-            .slice(0, Math.floor(Math.random() * 3) + 1); // Get 1 to 3 random users
-
-          // Update the company with these followers
-          company.followers = randomFollowers.map((user) => user._id);
-          await company.save();
-        }
-
-        console.log('Followers added to companies.');
-      }
     }
   } catch (err) {
     console.error('Seeding Error:', err);
-  } finally {
-    await mongoose.disconnect();
-    console.log('Disconnected from MongoDB');
   }
 };
 

@@ -1,6 +1,7 @@
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 import User from '../models/user.js';
+import Company from '../models/company.js';
 import UserDetails from '../models/user_details.js';
 
 dotenv.config();
@@ -8,6 +9,11 @@ dotenv.config();
 const seedUsers = async () => {
   try {
     await mongoose.connect(process.env.MONGO_URI);
+    const companies = await Company.find(); 
+    const companyMap = {};
+    companies.forEach(company => {
+      companyMap[company.name] = company._id;
+    });
 
     // Check if users already exist
     const existingUsers = await User.find();
@@ -26,7 +32,7 @@ const seedUsers = async () => {
           subscriptionPlan: 'Premium',
           createdAt: new Date(),
           updatedAt: new Date(),
-          company: 'Barcelona',
+          company: companyMap['Tech Corp'],
         },
         {
           name: 'jane',
@@ -39,7 +45,7 @@ const seedUsers = async () => {
           subscriptionPlan: 'Free',
           createdAt: new Date(),
           updatedAt: new Date(),
-          company: 'Revive',
+          company: companyMap['Marketing Pro'],
         },
       ];
 
@@ -72,9 +78,6 @@ const seedUsers = async () => {
     }
   } catch (err) {
     console.error('Seeding Error:', err);
-  } finally {
-    await mongoose.disconnect();
-    console.log('Disconnected from MongoDB');
   }
 };
 
