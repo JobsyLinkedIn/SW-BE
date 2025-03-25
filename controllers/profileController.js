@@ -1,4 +1,4 @@
-import * as profileService from "../services/profileServices.js";
+import * as profileService from '../services/profileServices.js';
 
 const createOrUpdateProfile = async (req, res) => {
   const token = req.headers.authorization.split(' ')[1];
@@ -152,7 +152,6 @@ const followUser = async (req, res) => {
     res.status(400).json({ msg: error.message });
   }
 };
-
 
 export {
   createOrUpdateProfile,

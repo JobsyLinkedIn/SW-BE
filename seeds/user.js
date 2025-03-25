@@ -16,17 +16,20 @@ const seedUsers = async () => {
     } else {
       const users = [
         {
+          name: 'john',
           email: 'john.doe@example.com',
           username: 'johndoe',
           password: 'password123',
-          coverPicture: 'http://example.com/cover.jpg', 
-          profilePicture: 'http://example.com/profile.jpg', 
+          coverPicture: 'http://example.com/cover.jpg',
+          profilePicture: 'http://example.com/profile.jpg',
           resume: 'http://example.com/resume.pdf',
-          subscriptionPlan: 'Premium', 
+          subscriptionPlan: 'Premium',
           createdAt: new Date(),
           updatedAt: new Date(),
+          company: 'Barcelona',
         },
         {
+          name: 'jane',
           email: 'jane.smith@example.com',
           username: 'janesmith',
           password: 'password456',
@@ -36,6 +39,7 @@ const seedUsers = async () => {
           subscriptionPlan: 'Free',
           createdAt: new Date(),
           updatedAt: new Date(),
+          company: 'Revive',
         },
       ];
 
@@ -43,10 +47,9 @@ const seedUsers = async () => {
       const insertedUsers = await User.insertMany(users);
       console.log('Users seeded successfully!');
 
-      
       const userDetails = [
         {
-          user: insertedUsers[0]._id, 
+          user: insertedUsers[0]._id,
           industry: 'Software',
           location: 'New York',
           followers: [],

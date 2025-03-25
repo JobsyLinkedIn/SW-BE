@@ -1,15 +1,15 @@
 import 'dotenv/config';
 import mongoose from 'mongoose';
-import seedUsers from "./seeds/user.js"
-import seedCompanies from "./seeds/company.js"
-import seedPosts from "./seeds/post.js"
-import seedComments from "./seeds/comment.js"
+import seedUsers from './seeds/user.js';
+import seedCompanies from './seeds/company.js';
+import seedPosts from './seeds/post.js';
+import seedComments from './seeds/comment.js';
 const MONGO_URI = process.env.MONGO_URI;
 
 const seedAll = async () => {
   try {
     if (!MONGO_URI) {
-      throw new Error("MONGO_URI is not defined. Check your .env file.");
+      throw new Error('MONGO_URI is not defined. Check your .env file.');
     }
 
     await mongoose.connect(MONGO_URI);

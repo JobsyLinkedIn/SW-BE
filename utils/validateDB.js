@@ -1,4 +1,4 @@
-import mongoose from "mongoose";
+import mongoose from 'mongoose';
 
 /**
  * Validate if a single document or list of documents exist in the database.
@@ -7,12 +7,12 @@ import mongoose from "mongoose";
  * @returns {Promise<boolean>} - Returns true if all IDs exist, otherwise false.
  */
 async function validateDocumentsExistence(model, docIds) {
-    if (docIds.length === 0) {
-        return true;
-    }
+  if (docIds.length === 0) {
+    return true;
+  }
 
-    const existingDocsCount = await model.countDocuments({ _id: { $in: docIds } });
-    return existingDocsCount === docIds.length;
+  const existingDocsCount = await model.countDocuments({ _id: { $in: docIds } });
+  return existingDocsCount === docIds.length;
 }
 
 /**
@@ -21,14 +21,13 @@ async function validateDocumentsExistence(model, docIds) {
  * @returns {boolean} - Returns true if all IDs are valid ObjectIds, otherwise false.
  */
 function areValidObjectIds(ids) {
-
-    if (!Array.isArray(ids) || ids.length === 0) {
-        return false;
-    }
-    if (ids.length === 0) {
-        return true;
-    }
-    return ids.every(id => mongoose.Types.ObjectId.isValid(id));
+  if (!Array.isArray(ids) || ids.length === 0) {
+    return false;
+  }
+  if (ids.length === 0) {
+    return true;
+  }
+  return ids.every((id) => mongoose.Types.ObjectId.isValid(id));
 }
 
-export { validateDocumentsExistence, areValidObjectIds }
+export { validateDocumentsExistence, areValidObjectIds };

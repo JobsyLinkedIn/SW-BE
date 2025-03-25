@@ -7,14 +7,14 @@ const workExperienceSchema = new mongoose.Schema({
   endDate: {
     type: mongoose.Schema.Types.Mixed,
     validate: {
-      validator: function(value) {
+      validator: function (value) {
         // Allow "Present" or valid date strings
-        return value === "Present" || !isNaN(Date.parse(value));
+        return value === 'Present' || !isNaN(Date.parse(value));
       },
-      message: props => `${props.value} is not a valid end date!`
-    }
+      message: (props) => `${props.value} is not a valid end date!`,
+    },
   },
-  description: String
+  description: String,
 });
 
 const profileSchema = new mongoose.Schema({
@@ -30,7 +30,7 @@ const profileSchema = new mongoose.Schema({
   coverPhoto: String,
   resume: String,
   privacySettings: Object,
-  followers: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }]
+  followers: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
 });
 
 const Profile = mongoose.model('Profile', profileSchema);

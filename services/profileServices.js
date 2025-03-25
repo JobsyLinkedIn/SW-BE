@@ -139,7 +139,6 @@ const followUser = async (token, followUserToken) => {
   return profile;
 };
 
-
 export {
   createOrUpdateProfile,
   uploadProfilePicture,

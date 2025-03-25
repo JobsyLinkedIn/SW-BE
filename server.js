@@ -6,7 +6,8 @@ import authRoutes from './routes/auth.js'; // Import authentication routes
 import profileRoutes from './routes/profileRoutes.js'; // Import profile routes
 import postRoutes from './routes/postRoutes.js'; // Import post routes
 import errorHandler from './middlewares/errorHandler.js';
-import userActionsRoutes from './routes/userActionsRoutes.js'
+import userActionsRoutes from './routes/userActionsRoutes.js';
+import connectionRoutes from './routes/connections.js';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -21,8 +22,9 @@ connectDB();
 // Routes
 app.use('/api/auth', authRoutes); // Authentication routes
 app.use('/api/user/profile', profileRoutes); // Profile routes
-app.use('/api/posts', postRoutes) //Posts Routes 
-app.use('/api/user/actions', userActionsRoutes) //User Actions Route
+app.use('/api/posts', postRoutes); //Posts Routes
+app.use('/api/user/actions', userActionsRoutes); //User Actions Route
+app.use('/api/users', connectionRoutes);
 
 // 🔴 Place this at the end (AFTER routes)
 app.use(errorHandler);

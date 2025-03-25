@@ -1,45 +1,43 @@
-import bcrypt from "bcryptjs";
-import jwt from "jsonwebtoken";
-import User from "../models/user.js";
-import transporter from "../config/email.js";
+import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
+import User from '../models/user.js';
+import transporter from '../config/email.js';
 
- const verifyCaptcha = async (captchaToken) => {
-    try {
-      const secretKey = process.env.RECAPTCHA_SECRET;
-      const response = await axios.post(
-        "https://www.google.com/recaptcha/api/siteverify",
-        null,
-        {
-          params: {
-            secret: secretKey,
-            response: captchaToken,
-          },
-        }
-      );
-  
-      return response.data.success;
-    } catch (error) {
-      console.error("CAPTCHA Verification Error:", error);
-      return false;
-    }
-  };
+const verifyCaptcha = async (captchaToken) => {
+  try {
+    const secretKey = process.env.RECAPTCHA_SECRET;
+    const response = await axios.post('https://www.google.com/recaptcha/api/siteverify', null, {
+      params: {
+        secret: secretKey,
+        response: captchaToken,
+      },
+    });
+
+    return response.data.success;
+  } catch (error) {
+    console.error('CAPTCHA Verification Error:', error);
+    return false;
+  }
+};
 
 const registerUser = async ({ name, email, password }) => {
   let user = await User.findOne({ email });
-  if (user) throw new Error("Email already in use");
+  if (user) throw new Error('Email already in use');
 
   const hashedPassword = await bcrypt.hash(password, 10);
 
   user = new User({ name, email, password: hashedPassword });
   await user.save();
 
-  const token = jwt.sign({ email }, process.env.JWT_SECRET, { expiresIn: "1h" });
+  const token = jwt.sign({ email }, process.env.JWT_SECRET, {
+    expiresIn: '1h',
+  });
 
   const verifyLink = `${process.env.BACKEND_URL}/api/auth/verify-email?token=${token}`;
   await transporter.sendMail({
     from: `"Jobsy Support Team" <${process.env.EMAIL_USER}>`,
     to: user.email,
-    subject: "🔹 Jobsy - Email Verification Required 🔹",
+    subject: '🔹 Jobsy - Email Verification Required 🔹',
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; padding: 20px; border: 1px solid #ddd; border-radius: 10px;">
         <h2 style="color: #0073e6;">Welcome to Jobsy! 🚀</h2>
@@ -64,50 +62,52 @@ const registerUser = async ({ name, email, password }) => {
     `,
   });
 
-  return { msg: "User registered. Please check your email to verify." };
+  return { msg: 'User registered. Please check your email to verify.' };
 };
 
 const verifyEmail = async (token) => {
   const decoded = jwt.verify(token, process.env.JWT_SECRET);
   const user = await User.findOne({ email: decoded.email });
 
-  if (!user) throw new Error("Invalid token or user does not exist");
-  if (user.isVerified) throw new Error("Email already verified");
+  if (!user) throw new Error('Invalid token or user does not exist');
+  if (user.isVerified) throw new Error('Email already verified');
 
   user.isVerified = true;
   await user.save();
 
-  return { msg: "Email verified successfully!" };
+  return { msg: 'Email verified successfully!' };
 };
 
 const loginUser = async ({ email, password }) => {
   let user = await User.findOne({ email });
-  if (!user) throw new Error("Login failed. Make sure your email and password are correct");
+  if (!user) throw new Error('Login failed. Make sure your email and password are correct');
 
   const isMatch = await bcrypt.compare(password, user.password);
-  if (!isMatch) throw new Error("Login failed. Make sure your email and password are correct");
+  if (!isMatch) throw new Error('Login failed. Make sure your email and password are correct');
 
   const token = jwt.sign({ userId: user._id, email: user.email }, process.env.JWT_SECRET, {
-    expiresIn: "1h",
+    expiresIn: '1h',
   });
 
-  return { msg: "Logged in successfully", token };
+  return { msg: 'Logged in successfully', token };
 };
 
 const resendConfirmationEmail = async (email) => {
   const user = await User.findOne({ email });
 
-  if (!user) throw new Error("User not found");
-  if (user.isVerified) throw new Error("Email already verified");
+  if (!user) throw new Error('User not found');
+  if (user.isVerified) throw new Error('Email already verified');
 
-  const token = jwt.sign({ email: user.email }, process.env.JWT_SECRET, { expiresIn: "1h" });
+  const token = jwt.sign({ email: user.email }, process.env.JWT_SECRET, {
+    expiresIn: '1h',
+  });
 
   const verifyLink = `${process.env.BACKEND_URL}/api/auth/verify-email?token=${token}`;
 
   await transporter.sendMail({
     from: `"Jobsy Support Team" <${process.env.EMAIL_USER}>`,
     to: user.email,
-    subject: "🔹 Jobsy - Email Verification Required 🔹",
+    subject: '🔹 Jobsy - Email Verification Required 🔹',
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; padding: 20px; border: 1px solid #ddd; border-radius: 10px;">
         <h2 style="color: #0073e6;">Welcome to Jobsy! 🚀</h2>
@@ -132,21 +132,23 @@ const resendConfirmationEmail = async (email) => {
     `,
   });
 
-  return { msg: "Verification email sent again. Please check your inbox." };
+  return { msg: 'Verification email sent again. Please check your inbox.' };
 };
 
 const forgotPassword = async (email) => {
   const user = await User.findOne({ email });
-  if (!user) throw new Error("User not found");
+  if (!user) throw new Error('User not found');
 
-  const token = jwt.sign({ email }, process.env.JWT_SECRET, { expiresIn: "15m" });
+  const token = jwt.sign({ email }, process.env.JWT_SECRET, {
+    expiresIn: '15m',
+  });
 
   const resetLink = `${process.env.BACKEND_URL}/api/auth/reset-password?token=${token}`;
 
   await transporter.sendMail({
     from: process.env.EMAIL_USER,
     to: email,
-    subject: "🔑 Jobsy - Reset Your Password",
+    subject: '🔑 Jobsy - Reset Your Password',
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; padding: 20px; border: 1px solid #ddd; border-radius: 10px;">
         <h2 style="color: #0073e6;">Reset Your Password 🔑</h2>
@@ -170,29 +172,31 @@ const forgotPassword = async (email) => {
     `,
   });
 
-  return { msg: "Password reset link sent. Please check your email." };
+  return { msg: 'Password reset link sent. Please check your email.' };
 };
 
 const resetPassword = async (token, newPassword) => {
   const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
   const user = await User.findOne({ email: decoded.email });
-  if (!user) throw new Error("Invalid or expired token");
+  if (!user) throw new Error('Invalid or expired token');
 
   const hashedPassword = await bcrypt.hash(newPassword, 10);
   user.password = hashedPassword;
   await user.save();
 
-  return { msg: "Password reset successfully. You can now log in with your new password." };
+  return {
+    msg: 'Password reset successfully. You can now log in with your new password.',
+  };
 };
 
 const changePassword = async ({ email, currentPassword, newPassword }) => {
   const user = await User.findOne({ email });
 
-  if (!user) throw new Error("User not found");
+  if (!user) throw new Error('User not found');
 
   const isMatch = await bcrypt.compare(currentPassword, user.password);
-  if (!isMatch) throw new Error("Current password is incorrect");
+  if (!isMatch) throw new Error('Current password is incorrect');
 
   const hashedPassword = await bcrypt.hash(newPassword, 10);
 
@@ -202,7 +206,7 @@ const changePassword = async ({ email, currentPassword, newPassword }) => {
   await transporter.sendMail({
     from: `"Jobsy Support Team" <${process.env.EMAIL_USER}>`,
     to: user.email,
-    subject: "🔑 Jobsy - Password Changed Successfully",
+    subject: '🔑 Jobsy - Password Changed Successfully',
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; padding: 20px; border: 1px solid #ddd; border-radius: 10px;">
         <h2 style="color: #0073e6;">Password Changed Successfully</h2>
@@ -218,19 +222,21 @@ const changePassword = async ({ email, currentPassword, newPassword }) => {
     `,
   });
 
-  return { msg: "Password changed successfully. A confirmation email has been sent." };
+  return {
+    msg: 'Password changed successfully. A confirmation email has been sent.',
+  };
 };
 
 const updateEmail = async ({ currentEmail, newEmail, password }) => {
   const user = await User.findOne({ email: currentEmail });
 
-  if (!user) throw new Error("User not found");
+  if (!user) throw new Error('User not found');
 
   const isMatch = await bcrypt.compare(password, user.password);
-  if (!isMatch) throw new Error("Current password is incorrect");
+  if (!isMatch) throw new Error('Current password is incorrect');
 
   const newemailuser = await User.findOne({ email: newEmail });
-  if (newemailuser) throw new Error("Email already in use");
+  if (newemailuser) throw new Error('Email already in use');
 
   user.email = newEmail;
   await user.save();
@@ -238,7 +244,7 @@ const updateEmail = async ({ currentEmail, newEmail, password }) => {
   await transporter.sendMail({
     from: `"Jobsy Support Team" <${process.env.EMAIL_USER}>`,
     to: currentEmail,
-    subject: "🔹 Jobsy - Email Updated Successfully 🔹",
+    subject: '🔹 Jobsy - Email Updated Successfully 🔹',
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; padding: 20px; border: 1px solid #ddd; border-radius: 10px;">
         <h2 style="color: #0073e6;">Email Changed Successfully ✅</h2>
@@ -255,43 +261,44 @@ const updateEmail = async ({ currentEmail, newEmail, password }) => {
     `,
   });
 
-  return { msg: "Email updated successfully. A confirmation email has been sent to your new email." };
+  return {
+    msg: 'Email updated successfully. A confirmation email has been sent to your new email.',
+  };
 };
 
 const updateUsername = async ({ token, newUsername }) => {
-    try {
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const userId = decoded.userId;
 
-        const userId = decoded.userId; 
+    const user = await User.findById(userId);
+    if (!user) throw new Error('User not found');
 
-        const user = await User.findById(userId);
-        if (!user) throw new Error("User not found");
+    user.name = newUsername;
+    await user.save();
 
-        user.name = newUsername;
-        await user.save();
-
-        return { msg: "Username updated successfully" };
-    } catch (error) {
-        console.error("Token Verification Error:", error.message);
-        throw new Error("Invalid or expired token");
-    }
+    return { msg: 'Username updated successfully' };
+  } catch (error) {
+    console.error('Token Verification Error:', error.message);
+    throw new Error('Invalid or expired token');
+  }
 };
 
 const deleteAccount = async ({ email, password }) => {
   const user = await User.findOne({ email });
 
-  if (!user) throw new Error("User not found");
+  if (!user) throw new Error('User not found');
 
   const isMatch = await bcrypt.compare(password, user.password);
-  if (!isMatch) throw new Error("Incorrect password");
+  if (!isMatch) throw new Error('Incorrect password');
 
   await User.deleteOne({ email });
 
   await transporter.sendMail({
     from: `"Jobsy Support Team" <jobsy.notifications@gmail.com>`,
     to: email,
-    subject: "Account Deleted Successfully",
+    subject: 'Account Deleted Successfully',
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; padding: 20px; border: 1px solid #ddd; border-radius: 10px;">
         <h2 style="color: red;">Your Jobsy Account has been Deleted</h2>
@@ -307,19 +314,19 @@ const deleteAccount = async ({ email, password }) => {
     `,
   });
 
-  return { msg: "Account deleted successfully" };
+  return { msg: 'Account deleted successfully' };
 };
 
 export {
-    verifyCaptcha,
-    registerUser,
-    verifyEmail,
-    loginUser,
-    resendConfirmationEmail,
-    forgotPassword,
-    resetPassword,
-    changePassword,
-    updateEmail,
-    updateUsername,
-    deleteAccount,
-  };
+  verifyCaptcha,
+  registerUser,
+  verifyEmail,
+  loginUser,
+  resendConfirmationEmail,
+  forgotPassword,
+  resetPassword,
+  changePassword,
+  updateEmail,
+  updateUsername,
+  deleteAccount,
+};
