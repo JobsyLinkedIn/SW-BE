@@ -1,8 +1,11 @@
 import express from 'express';
 import * as connections_controller from '../controllers/connections_controller.js';
+import authenticateUser from '../middlewares/authenticateUser.js';
 
 const router = express.Router();
-router.get('/search', connections_controller.search_user);
+// router.get('/search',authenticateUser ,connections_controller.search_user);
+
+router.get('/search',connections_controller.search_user);
 router.post('/send',connections_controller.send_connection_request);
 router.patch('/handle',connections_controller.accept_decline);
 router.delete('/remove', connections_controller.remove_connection);
