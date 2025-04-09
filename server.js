@@ -8,6 +8,8 @@ import postRoutes from './routes/postRoutes.js'; // Import post routes
 import errorHandler from './middlewares/errorHandler.js';
 import userActionsRoutes from './routes/userActionsRoutes.js';
 import connectionRoutes from './routes/connections.js';
+import swaggerUi from 'swagger-ui-express';
+import swaggerDocument from './swagger_output.json' with { type: 'json' };
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -15,7 +17,6 @@ const PORT = process.env.PORT || 3000;
 // Middleware
 app.use(express.json());
 app.use(cors()); // Enable CORS for frontend requests
-
 // Connect to MongoDB
 connectDB();
 
@@ -36,5 +37,6 @@ app.use((err, req, res, next) => {
   res.status(500).send('Something broke!');
 });
 */
-
+// Swagger UI
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

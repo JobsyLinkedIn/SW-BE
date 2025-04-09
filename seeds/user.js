@@ -9,9 +9,9 @@ dotenv.config();
 const seedUsers = async () => {
   try {
     await mongoose.connect(process.env.MONGO_URI);
-    const companies = await Company.find(); 
+    const companies = await Company.find();
     const companyMap = {};
-    companies.forEach(company => {
+    companies.forEach((company) => {
       companyMap[company.name] = company._id;
     });
 

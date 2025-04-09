@@ -14,4 +14,3 @@ export const get_pending_requests_service = async (userEmail) => {
   }
 };
 export default get_pending_requests_service;
-

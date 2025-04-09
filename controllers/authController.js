@@ -1,25 +1,25 @@
-import * as authService from "../services/authServices.js";
+import * as authService from '../services/authServices.js';
 
 const register = async (req, res) => {
-    const { name, email, password, captchaToken } = req.body;
-  
-    // try {
-    //   if (!captchaToken) {
-    //     return res.status(400).json({ msg: "CAPTCHA verification failed" });
-    //   }
-  
-    //   const isHuman = await authService.verifyCaptcha(captchaToken);
-    //   if (!isHuman) {
-    //     return res.status(400).json({ msg: "CAPTCHA verification failed" });
-    //   }
-  
-    //   const response = await authService.registerUser({ name, email, password });
-    //   res.status(201).json(response);
-    // } catch (error) {
-    //   console.error("Registration Error:", error);
-    //   res.status(400).json({ msg: error.message });
-    // }
-  };
+  const { name, email, password, captchaToken } = req.body;
+
+  // try {
+  //   if (!captchaToken) {
+  //     return res.status(400).json({ msg: "CAPTCHA verification failed" });
+  //   }
+
+  //   const isHuman = await authService.verifyCaptcha(captchaToken);
+  //   if (!isHuman) {
+  //     return res.status(400).json({ msg: "CAPTCHA verification failed" });
+  //   }
+
+  //   const response = await authService.registerUser({ name, email, password });
+  //   res.status(201).json(response);
+  // } catch (error) {
+  //   console.error("Registration Error:", error);
+  //   res.status(400).json({ msg: error.message });
+  // }
+};
 
 const verify = async (req, res) => {
   const { token } = req.query;
@@ -105,16 +105,16 @@ const updateEmailController = async (req, res) => {
 };
 
 const updateUsernameController = async (req, res) => {
-    const { token, newUsername } = req.body;
-  
-    try {
-      const response = await authService.updateUsername({ token, newUsername });
-      res.status(200).json(response);
-    } catch (error) {
-      console.error(error);
-      res.status(400).json({ msg: error.message });
-    }
-  };
+  const { token, newUsername } = req.body;
+
+  try {
+    const response = await authService.updateUsername({ token, newUsername });
+    res.status(200).json(response);
+  } catch (error) {
+    console.error(error);
+    res.status(400).json({ msg: error.message });
+  }
+};
 
 const deleteAccountController = async (req, res) => {
   const { email, password } = req.body;
@@ -129,14 +129,14 @@ const deleteAccountController = async (req, res) => {
 };
 
 export {
-    register,
-    verify,
-    login,
-    resendConfirmation,
-    forgot,
-    reset,
-    change,
-    updateEmailController,
-    updateUsernameController,
-    deleteAccountController,
-  };
+  register,
+  verify,
+  login,
+  resendConfirmation,
+  forgot,
+  reset,
+  change,
+  updateEmailController,
+  updateUsernameController,
+  deleteAccountController,
+};

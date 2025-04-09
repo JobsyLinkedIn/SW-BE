@@ -4,7 +4,7 @@ import Company from '../models/company.js';
 const seedCompaniesFollowers = async () => {
   try {
     const users = await User.find();
-    const companies = await Company.find(); 
+    const companies = await Company.find();
 
     if (users.length > 0 && companies.length > 0) {
       for (const company of companies) {

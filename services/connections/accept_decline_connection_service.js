@@ -14,12 +14,12 @@ export const accept_decline_connection_service = async (receiverEmail, senderEma
     }
 
     if (action === 'accept') {
-      receiver.pendingRequests = receiver.pendingRequests.filter(id => !id.equals(sender._id));
+      receiver.pendingRequests = receiver.pendingRequests.filter((id) => !id.equals(sender._id));
       receiver.connections.push(sender._id);
       sender.connections.push(receiver._id);
       await sender.save();
     } else if (action === 'decline') {
-      receiver.pendingRequests = receiver.pendingRequests.filter(id => !id.equals(sender._id));
+      receiver.pendingRequests = receiver.pendingRequests.filter((id) => !id.equals(sender._id));
     } else {
       throw new Error('Invalid action. Use "accept" or "decline".');
     }

@@ -12,8 +12,8 @@ export const remove_connection_service = async (senderEmail, receiverEmail) => {
     if (!sender.connections.includes(receiver._id)) {
       throw new Error('Users are not connected');
     }
-    sender.connections = sender.connections.filter(id => !id.equals(receiver._id));
-    receiver.connections = receiver.connections.filter(id => !id.equals(sender._id));
+    sender.connections = sender.connections.filter((id) => !id.equals(receiver._id));
+    receiver.connections = receiver.connections.filter((id) => !id.equals(sender._id));
 
     await sender.save();
     await receiver.save();

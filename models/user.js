@@ -20,10 +20,8 @@ const userSchema = new mongoose.Schema({
     ref: 'Company',
     default: null,
   },
-  connections: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User', default: []  }],
-  pendingRequests: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User', default: []  }],
-
-
+  connections: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User', default: [] }],
+  pendingRequests: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User', default: [] }],
 });
 
 const User = mongoose.model('User', userSchema, 'User');

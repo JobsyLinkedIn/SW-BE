@@ -4,8 +4,8 @@ export const send_connection_request_service = async (senderEmail, receiverEmail
   try {
     const sender = await User.findOne({ email: senderEmail });
     const receiver = await User.findOne({ email: receiverEmail });
-    // console.log("Sender:", sender);  
-    // console.log("Receiver:", receiver);  
+    // console.log("Sender:", sender);
+    // console.log("Receiver:", receiver);
     if (!sender || !receiver) {
       throw new Error('One or both users not found');
     }
@@ -28,4 +28,3 @@ export const send_connection_request_service = async (senderEmail, receiverEmail
 };
 
 export default send_connection_request_service;
-
