@@ -45,9 +45,9 @@ const createPostCtrl = asyncHandler(async (req, res) => {
   const userId = getUserIdFromToken(token);
 
   const { content, taggedUsersIds = [], links = [] } = req.body;
-  const UploadedFiles=req.mediaFilesData || []
+  const UploadedFiles = req.mediaFilesData || [];
 
-  const post = await createPostService({ userId, content, taggedUsersIds, links ,UploadedFiles });
+  const post = await createPostService({ userId, content, taggedUsersIds, links, UploadedFiles });
 
   res.status(201).json({ message: 'Post created successfully', post });
 });
@@ -123,8 +123,8 @@ const editPostCtrl = asyncHandler(async (req, res) => {
 
     // Extract post ID and request body
     const postId = req.params.id;
-    const UploadedFiles=req.mediaFilesData || []
-    const postData = { ...req.body, UploadedFiles , userId };
+    const UploadedFiles = req.mediaFilesData || [];
+    const postData = { ...req.body, UploadedFiles, userId };
 
     // Call service function
     const updatedPost = await editPostService(postId, postData);

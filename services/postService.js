@@ -7,9 +7,15 @@ import UserDetails from '../models/user_details.js';
 import Profile from '..//models/profileModel.js';
 import { getUserIdFromToken } from '../utils/auth.js';
 import { validateDocumentsExistence, areValidObjectIds } from '../utils/validateDB.js';
-import deleteFileFromCloudinary from "../utils/cloudinaryHelpers.js"
+import deleteFileFromCloudinary from '../utils/cloudinaryHelpers.js';
 
-const createPostService = async ({ userId, content, taggedUsersIds = [], links = [] ,UploadedFiles=[]}) => {
+const createPostService = async ({
+  userId,
+  content,
+  taggedUsersIds = [],
+  links = [],
+  UploadedFiles = [],
+}) => {
   // TODO: Handle Uploaded Media (Implementation Pending)
 
   // ✅ Validate Post Data
@@ -23,13 +29,13 @@ const createPostService = async ({ userId, content, taggedUsersIds = [], links =
     throw new Error('One or more tagged users do not exist');
   }
   // ✅ Get Uploaded Media (images,video) In the Post
-  let media=[]
-  if(UploadedFiles.length !== 0){
-    media = UploadedFiles.map(file => ({
-    publicId: file.public_id,       
-    url: file.secure_url,     
-    type: file.resource_type
-}));
+  let media = [];
+  if (UploadedFiles.length !== 0) {
+    media = UploadedFiles.map((file) => ({
+      publicId: file.public_id,
+      url: file.secure_url,
+      type: file.resource_type,
+    }));
   }
 
   // ✅ Create and Save the Post
@@ -96,7 +102,10 @@ const getFeedService = async (userId, page = 1, limit = 10) => {
   };
 };
 
-const editPostService = async (postId, { content, taggedUsersIds = [], links = [], UploadedFiles=[] ,userId }) => {
+const editPostService = async (
+  postId,
+  { content, taggedUsersIds = [], links = [], UploadedFiles = [], userId }
+) => {
   // Ensure post exists
   const post = await Post.findById(postId).populate('taggedUsers', 'name');
   if (!post) {
@@ -124,21 +133,21 @@ const editPostService = async (postId, { content, taggedUsersIds = [], links = [
   //Handle editing Images,Video Uploaded in the Post
   //delete post uploaded files (images,videos) from Cloundinary
   for (const file of post.media) {
-    await deleteFileFromCloudinary(file.publicId)
+    await deleteFileFromCloudinary(file.publicId);
   }
   // ✅ Get Uploaded Media (images,video) In the Post
-  let media=[]
-  if(UploadedFiles.length !== 0){
-    media = UploadedFiles.map(file => ({
-    publicId: file.public_id,       
-    url: file.secure_url,     
-    type: file.resource_type
-    }))
+  let media = [];
+  if (UploadedFiles.length !== 0) {
+    media = UploadedFiles.map((file) => ({
+      publicId: file.public_id,
+      url: file.secure_url,
+      type: file.resource_type,
+    }));
   }
   // Update post
   const updatedPost = await Post.findByIdAndUpdate(
     postId,
-    { $set: { content, taggedUsers: taggedUsersIds, links,media } },
+    { $set: { content, taggedUsers: taggedUsersIds, links, media } },
     { new: true }
   )
     .populate('author', 'name profilePicture')
@@ -412,6 +421,4 @@ export {
   getPostSharesService,
   sharePostService,
   getFeedService,
-} ;
-
-
+};
