@@ -14,12 +14,15 @@ import {
   sharePostCtrl,
 } from '../controllers/postsController.js';
 const router = express.Router();
+import uploadByMulter from "../middlewares/multer/multer.js"
+import cloudinaryUploadFiles from "../middlewares/uploadToCloudinary/uploadFilesToCloudinary.js"
 
 // api/posts
-router.route('/').get(getFeedCtrl).post(createPostCtrl); //We shoule Use Verify Token MiddleWare First
+router.route('/').get(getFeedCtrl).post(uploadByMulter.array("media"),cloudinaryUploadFiles,createPostCtrl)
+//We shoule Use Verify Token MiddleWare First
 
 // api/posts/:id
-router.route('/:id').get(getSinglePostCtrl).put(editPostCtrl);
+router.route('/:id').get(getSinglePostCtrl).put(uploadByMulter.array("media"),cloudinaryUploadFiles,editPostCtrl);
 
 // api/posts/postId/likes
 router.route('/:postId/likes').put(likePostCtrl).get(getPostLikesCtrl); // Route to fetch users who make like to  a specific post with pagination
