@@ -17,7 +17,7 @@ const cloudinaryUploadFiles = async (req, res, next) => {
     if (!req.files) {
       return next();
     }
-    let mediaFiles = req.filesss;
+    let mediaFiles = req.files;
     let mediaFilesData = []; //public_id and secure_url
 
     for (const file of mediaFiles) {
