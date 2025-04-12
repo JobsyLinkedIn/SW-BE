@@ -14,6 +14,8 @@ router.delete('/unfollow',authenticateUser, connections_controller.unfollow_user
 router.get('/connections', authenticateUser,connections_controller.get_connections);
 router.get('/pending', authenticateUser,connections_controller.get_pending_requests);
 router.post('/block', authenticateUser,connections_controller.block_user);
+router.get('/block/:id', authenticateUser,connections_controller.get_list_blocked);
+
 router.post('/unblock', authenticateUser,connections_controller.unblock_user);
 router.post('/message', authenticateUser,connections_controller.sendMessageRequest);
 router.get('/getRequest/:id',authenticateUser,connections_controller.getAllMessageRequests);

@@ -10,6 +10,7 @@ import blockUser from '../services/connections/block_user_service.js';
 import unblockUser from '../services/connections/unblock_user_service.js';
 import createMessageRequest from '../services/connections/message_request_for_nonconnections_service.js';
 import get_message_requests from '../services/connections/get_all_message_request_service.js';
+import getBlockedUsers from '../services/connections/get_blocked_list_service.js';
 
 export const search_user = async (req, res) => {
   try {
@@ -131,5 +132,16 @@ export const getAllMessageRequests = async (req, res) => {
     res.status(200).json(messageRequests);
   } catch (error) {
     res.status(500).json({ message: error.message });
+  }
+};
+
+export const get_list_blocked = async (req, res) => {
+  try {
+      const userId = req.params.userId; 
+      const blockedUsers = await getBlockedUsers(userId); 
+
+      res.status(200).json(blockedUsers);
+  } catch (error) {
+      res.status(500).json({ message: error.message });
   }
 };
