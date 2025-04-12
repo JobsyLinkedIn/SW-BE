@@ -6,6 +6,9 @@ import follow_user_service from '../services/connections/follow_service.js';
 import unfollow_user_service from '../services/connections/unfollow_service.js';
 import get_connections_service from '../services/connections/get_list_of_connections_service.js';
 import get_pending_requests_service from '../services/connections/get_list_of_pending_connections_service.js';
+import blockUser from '../services/connections/block_user_service.js';
+import unblockUser from '../services/connections/unblock_user_service.js';
+import createMessageRequest from '../services/connections/message_request_for_nonconnections_service.js';
 
 export const search_user = async (req, res) => {
   try {
@@ -86,5 +89,36 @@ export const get_pending_requests = async (req, res) => {
     res.status(200).json(result);
   } catch (error) {
     res.status(500).json({ message: 'Error fetching pending requests', error: error.message });
+  }
+};
+
+export const block_user = async (req, res) => {
+  const { userId, targetUserId } = req.body;
+  try {
+    await blockUser(userId, targetUserId);
+    res.status(200).json({ message: 'User blocked successfully.' });
+  } catch (err) {
+    res.status(500).json({ message: 'Error blocking user.', error: err.message });
+  }
+};
+
+export const unblock_user = async (req, res) => {
+  const { userId, targetUserId } = req.body;
+
+  try {
+    await unblockUser(userId, targetUserId);
+    res.status(200).json({ message: 'User unblocked successfully.' });
+  } catch (err) {
+    res.status(500).json({ message: 'Error unblocking user.', error: err.message });
+  }
+};
+
+export const sendMessageRequest = async (req, res) => {
+  try {
+    const { from, to, content } = req.body;
+    const newRequest = await createMessageRequest(from, to, content);
+    res.status(201).json({ message: 'Message request sent successfully' });
+  } catch (err) {
+    res.status(500).json({ message: 'Error creating message request:', error: err.message });
   }
 };

@@ -7,6 +7,7 @@ const userDetailsSchema = new mongoose.Schema({
   followers: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User', index: true }],
   skills: [String],
   savedPosts: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Post' }],
+  blockedUsers: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
 });
 
 const UserDetails = mongoose.model('UserDetails', userDetailsSchema, 'UserDetails');
