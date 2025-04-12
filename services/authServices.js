@@ -3,6 +3,32 @@ import jwt from 'jsonwebtoken';
 import User from '../models/user.js';
 import transporter from '../config/email.js';
 
+import { OAuth2Client } from 'google-auth-library';
+
+const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+
+const googleSignIn = async (token) => {
+  const ticket = await client.verifyIdToken({
+    idToken: token,
+    audience: process.env.GOOGLE_CLIENT_ID,
+  });
+
+  const payload = ticket.getPayload();
+  const { email, name } = payload;
+
+  let user = await User.findOne({ email });
+  if (!user) {
+    user = new User({ name, email, isVerified: true });
+    await user.save();
+  }
+
+  const jwtToken = jwt.sign({ userId: user._id, email: user.email }, process.env.JWT_SECRET, {
+    expiresIn: '1h',
+  });
+
+  return { msg: 'Google Sign-In successful', token: jwtToken };
+};
+
 const verifyCaptcha = async (captchaToken) => {
   try {
     const secretKey = process.env.RECAPTCHA_SECRET;
@@ -329,4 +355,5 @@ export {
   updateEmail,
   updateUsername,
   deleteAccount,
+  googleSignIn,
 };

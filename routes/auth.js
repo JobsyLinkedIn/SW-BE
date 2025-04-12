@@ -13,5 +13,6 @@ router.post('/change-password', authController.change);
 router.post('/update-email', authController.updateEmailController);
 router.post('/update-username', authController.updateUsernameController);
 router.delete('/delete-account', authController.deleteAccountController);
+router.post('/google-signin', authController.googleSignInController);
 
 export default router;

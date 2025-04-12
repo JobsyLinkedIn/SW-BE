@@ -1,24 +1,36 @@
 import * as authService from '../services/authServices.js';
 
+
+const googleSignInController = async (req, res) => {
+  const { token } = req.body;
+
+  try {
+    const response = await authService.googleSignIn(token);
+    res.status(200).json(response);
+  } catch (error) {
+    console.error('Google Sign-In Error:', error.message);
+    res.status(400).json({ msg: error.message });
+  }
+};
 const register = async (req, res) => {
   const { name, email, password, captchaToken } = req.body;
 
-  // try {
-  //   if (!captchaToken) {
-  //     return res.status(400).json({ msg: "CAPTCHA verification failed" });
-  //   }
+   try {
+     if (!captchaToken) {
+       return res.status(400).json({ msg: "CAPTCHA verification failed" });
+     }
 
-  //   const isHuman = await authService.verifyCaptcha(captchaToken);
-  //   if (!isHuman) {
-  //     return res.status(400).json({ msg: "CAPTCHA verification failed" });
-  //   }
+     const isHuman = await authService.verifyCaptcha(captchaToken);
+     if (!isHuman) {
+       return res.status(400).json({ msg: "CAPTCHA verification failed" });
+     }
 
-  //   const response = await authService.registerUser({ name, email, password });
-  //   res.status(201).json(response);
-  // } catch (error) {
-  //   console.error("Registration Error:", error);
-  //   res.status(400).json({ msg: error.message });
-  // }
+     const response = await authService.registerUser({ name, email, password });
+     res.status(201).json(response);
+   } catch (error) {
+     console.error("Registration Error:", error);
+     res.status(400).json({ msg: error.message });
+   }
 };
 
 const verify = async (req, res) => {
@@ -139,4 +151,5 @@ export {
   updateEmailController,
   updateUsernameController,
   deleteAccountController,
+  googleSignInController,
 };
