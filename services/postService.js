@@ -132,8 +132,14 @@ const editPostService = async (
   }
   //Handle editing Images,Video Uploaded in the Post
   //delete post uploaded files (images,videos) from Cloundinary
-  for (const file of post.media) {
-    await deleteFileFromCloudinary(file.publicId);
+  for (let file of post.media) {
+    if (file.publicId) {
+      try {
+        await deleteFileFromCloudinary(file.publicId);
+      } catch (error) {
+        throw error;
+      }
+    }
   }
   // ✅ Get Uploaded Media (images,video) In the Post
   let media = [];
@@ -408,6 +414,89 @@ const sharePostService = async ({ userId, sharedPostId, content = '', taggedUser
   return newPost;
 };
 
+/*
+@param {string} PostId - The ID of the post being deleted
+@param {string} userId - The ID of the user who is delete the post
+*/
+const deletePostService = async (postId, userId) => {
+  // ✅ Validate Post ObjectId
+  if (!areValidObjectIds([postId])) {
+    const error = new Error(postId);
+    error.statusCode = 404;
+    throw error;
+  }
+  // ✅ Validate User ObjectId
+  if (!areValidObjectIds([userId])) {
+    const error = new Error('User  Not found');
+    error.statusCode = 404;
+    throw error;
+  }
+
+  // ✅ Find the post with author populated
+  const post = await Post.findById(postId).populate('author', '_id');
+  if (!post) {
+    const error = new Error('Post not found');
+    error.statusCode = 404;
+    throw error;
+  }
+
+  // ✅ Verify authorization (author or admin)
+  const user = await User.findById(userId);
+  const isAuthor = post.author._id.toString() === userId;
+  const isAdmin = user?.isAdmin;
+
+  if (!isAuthor && !isAdmin) {
+    const error = new Error('Unauthorized: Only post author or admin can delete this post');
+    error.statusCode = 403;
+    throw error;
+  }
+  try {
+    // TODO: Implement data backup for rollback capability
+    // Currently proceeding without rollback safety
+
+    // Delete all associated comments
+    await Comment.deleteMany({ post: postId });
+
+    // Delete media from Cloudinary if exists
+    if (post.media?.length > 0) {
+      for (let file of post.media) {
+        if (file.publicId) {
+          await deleteFileFromCloudinary(file.publicId).catch((e) => {
+            console.error(`Failed to delete Cloudinary file ${file.publicId}:`, e);
+            // Continue despite failure
+          });
+        }
+      }
+    }
+
+    // Remove post references from users' savedPosts
+    await UserDetails.updateMany({ savedPosts: postId }, { $pull: { savedPosts: postId } });
+
+    // If this is a shared post, decrement sharesCount on original
+    if (post.sharedPost) {
+      await Post.findByIdAndUpdate(post.sharedPost, { $inc: { sharesCount: -1 } });
+    }
+
+    // Finally delete the post itself
+    await Post.findByIdAndDelete(postId);
+
+    return { message: 'Post deleted successfully' };
+  } catch (error) {
+    console.error('Post deletion failed:', error);
+
+    // TODO: Implement rollback mechanism here
+    // Currently errors will leave the system in partial state
+    // Need to:
+    // 1. Store operation state before execution
+    // 2. Implement compensation actions
+    // 3. Add admin alerts for manual recovery
+
+    const serviceError = new Error('Failed to delete post');
+    serviceError.statusCode = 500;
+    throw serviceError;
+  }
+};
+
 export {
   createPostService,
   getSinglePostService,
@@ -421,4 +510,5 @@ export {
   getPostSharesService,
   sharePostService,
   getFeedService,
+  deletePostService,
 };

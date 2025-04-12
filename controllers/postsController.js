@@ -24,6 +24,7 @@ import {
   getPostSharesService,
   sharePostService,
   getFeedService,
+  deletePostService,
 } from '../services/postService.js';
 
 /**-------------------------------------------------------
@@ -344,6 +345,27 @@ const sharePostCtrl = asyncHandler(async (req, res) => {
   res.status(201).json({ message: 'Post shared successfully', sharedPost });
 });
 
+/**-------------------------------------------------------
+ *
+ * @desc     Delete Post
+ * @route   /api/posts/:id
+ * @method   DELETE
+ * @access   Private [Only The Owner of Post Or Admin]
+ *
+ *-------------------------------------------------------*/
+const deletePostCtrl = asyncHandler(async (req, res) => {
+  //TODO : Add MiddleWare to Handle Token Verifecation and Toekn Payload Extraction
+  // Extract and validate token
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({ message: 'Unauthorized: No token provided' });
+  }
+  const token = authHeader.split(' ')[1];
+  const userId = getUserIdFromToken(token);
+  const postId = req.params.id;
+  const message = await deletePostService(postId, userId);
+  res.status(200).json({ message: message });
+});
 export {
   createPostCtrl,
   getSinglePostCtrl,
@@ -357,4 +379,5 @@ export {
   getPostLikesCtrl,
   getPostSharesCtrl,
   sharePostCtrl,
+  deletePostCtrl,
 };
