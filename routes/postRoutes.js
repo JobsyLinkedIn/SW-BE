@@ -12,6 +12,7 @@ import {
   getPostLikesCtrl,
   getPostSharesCtrl,
   sharePostCtrl,
+  deletePostCtrl,
 } from '../controllers/postsController.js';
 const router = express.Router();
 import uploadByMulter from '../middlewares/multer/multer.js';
@@ -28,7 +29,8 @@ router
 router
   .route('/:id')
   .get(getSinglePostCtrl)
-  .put(uploadByMulter.array('media'), cloudinaryUploadFiles, editPostCtrl);
+  .put(uploadByMulter.array('media'), cloudinaryUploadFiles, editPostCtrl)
+  .delete(deletePostCtrl);
 
 // api/posts/postId/likes
 router.route('/:postId/likes').put(likePostCtrl).get(getPostLikesCtrl); // Route to fetch users who make like to  a specific post with pagination
