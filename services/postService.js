@@ -21,12 +21,16 @@ const createPostService = async ({
   // ✅ Validate Post Data
   const { error } = validateCreatePost({ content, taggedUsersIds, links });
   if (error) {
-    throw new Error(error.details[0].message);
+    const err = new Error(error.details[0].message);
+    err.statusCode = 400;
+    throw err;
   }
 
   // ✅ Validate Tagged Users Exist
   if (!areValidObjectIds(taggedUsersIds) || !validateDocumentsExistence(User, taggedUsersIds)) {
-    throw new Error('One or more tagged users do not exist');
+    const error = new Error('One or more tagged users do not exist');
+    error.statusCode = 400;
+    throw error;
   }
   // ✅ Get Uploaded Media (images,video) In the Post
   let media = [];
@@ -56,7 +60,9 @@ const getSinglePostService = async (postId) => {
     .populate('taggedUsers', 'name');
 
   if (!post) {
-    throw new Error('Post not found');
+    const error = new Error('Post not found');
+    error.statusCode = 404;
+    throw error;
   }
 
   return post.toObject();
@@ -106,28 +112,43 @@ const editPostService = async (
   postId,
   { content, taggedUsersIds = [], links = [], UploadedFiles = [], userId }
 ) => {
+  // ✅ Validate Post ObjectId
+  if (!areValidObjectIds([postId])) {
+    const error = new Error('Post not found');
+    error.statusCode = 404;
+    throw error;
+  }
   // Ensure post exists
   const post = await Post.findById(postId).populate('taggedUsers', 'name');
   if (!post) {
-    throw new Error('Post not found');
+    const error = new Error('Post not found');
+    error.statusCode = 404;
+    throw error;
   }
 
   // Ensure only author can edit
   if (post.author.toString() !== userId) {
-    throw new Error('You are not authorized to edit this post');
+    const error = new Error('You are not authorized to edit this post');
+    error.statusCode = 403; // Forbidden
+    error.code = 'UNAUTHORIZED_ACCESS';
+    throw error;
   }
 
   // Validate input data
   const { error } = validateEditPost({ content, taggedUsersIds, links });
   if (error) {
-    throw new Error(error.details[0].message);
+    const err = new Error(error.details[0].message);
+    err.statusCode = 400;
+    throw err;
   }
 
   // Validate tagged users exist
   if (taggedUsersIds.length > 0) {
     const validUsersCount = await User.countDocuments({ _id: { $in: taggedUsersIds } });
     if (validUsersCount !== taggedUsersIds.length) {
-      throw new Error('One or more tagged users do not exist');
+      const error = new Error('One or more tagged users do not exist');
+      error.statusCode = 400;
+      throw error;
     }
   }
   //Handle editing Images,Video Uploaded in the Post
@@ -217,7 +238,7 @@ const addCommentService = async ({ postId, userId, content = null, taggedUsersId
     const validUsersCount = await User.countDocuments({ _id: { $in: taggedUsersIds } });
     if (validUsersCount !== taggedUsersIds.length) {
       const error = new Error('Tagged users not found');
-      error.statusCode = 404;
+      error.statusCode = 400;
       throw error;
     }
   }
@@ -257,12 +278,19 @@ const deleteCommentService = async (commentId, userId) => {
 
   // ✅ Find the comment
   const comment = await Comment.findById(commentId);
-  if (!comment) throw new Error('Comment not found');
+  if (!comment) {
+    const error = new Error('Comment not found');
+    error.statusCode = 404;
+    throw error;
+  }
 
   // ✅ Ensure User is Author or Admin
   const user = await User.findById(userId).lean();
   if (comment.author.toString() !== userId && !user?.isAdmin) {
-    throw new Error('Forbidden: You cannot delete this comment');
+    const error = new Error('Forbidden: You are not authorized to delete this comment');
+    error.statusCode = 403; // Forbidden
+    error.code = 'UNAUTHORIZED_ACCESS';
+    throw error;
   }
 
   // ✅ Delete the comment
@@ -278,28 +306,28 @@ const deleteCommentService = async (commentId, userId) => {
 const editCommentService = async (commentId, { content, taggedUsersIds = [], userId }) => {
   // ✅ Validate IDs
   if (!areValidObjectIds([commentId, userId, ...taggedUsersIds])) {
-    throw { status: 400, message: 'Invalid ID(s) provided' };
+    throw { statusCode: 400, message: 'Invalid ID(s) provided' };
   }
 
   // ✅ Find the comment
   const comment = await Comment.findById(commentId);
-  if (!comment) throw { status: 404, message: 'Comment not found' };
+  if (!comment) throw { statusCode: 404, message: 'Comment not found' };
 
   // ✅ Ensure User is the Author
   if (comment.author.toString() !== userId) {
-    throw { status: 403, message: 'Forbidden: You cannot edit this comment' };
+    throw { statusCode: 403, message: 'Forbidden: You cannot edit this comment' };
   }
 
   // ✅ Ensure Comment is not empty
   if (!content && taggedUsersIds.length === 0) {
-    throw { status: 400, message: 'Comment cannot be empty' };
+    throw { statusCode: 400, message: 'Comment cannot be empty' };
   }
 
   // ✅ Validate Tagged Users Exist
   if (taggedUsersIds.length > 0) {
     const taggedUsersExist = await validateDocumentsExistence(User, taggedUsersIds);
     if (!taggedUsersExist) {
-      throw { status: 404, message: 'Tagged users not found' };
+      throw { statusCode: 404, message: 'Tagged users not found' };
     }
   }
 
@@ -314,13 +342,13 @@ const editCommentService = async (commentId, { content, taggedUsersIds = [], use
 const getPostCommentsService = async (postId, page, limit) => {
   // ✅ Validate post ID
   if (!postId || !mongoose.Types.ObjectId.isValid(postId)) {
-    throw { status: 400, message: 'Invalid post ID' };
+    throw { statusCode: 400, message: 'Invalid post ID' };
   }
 
   // ✅ Check if post exists
   const postExists = await Post.findById(postId);
   if (!postExists) {
-    throw { status: 404, message: 'Post not found' };
+    throw { statusCode: 404, message: 'Post not found' };
   }
 
   // ✅ Get total comments count
@@ -340,7 +368,7 @@ const getPostCommentsService = async (postId, page, limit) => {
 const getPostLikesService = async (postId, page, limit) => {
   // ✅ Validate postId
   if (!postId || !mongoose.Types.ObjectId.isValid(postId)) {
-    throw { status: 400, message: 'Invalid Post ID' };
+    throw { statusCode: 400, message: 'Invalid Post ID' };
   }
 
   // ✅ Find the post and populate likes
@@ -354,7 +382,7 @@ const getPostLikesService = async (postId, page, limit) => {
   });
 
   if (!post) {
-    throw { status: 404, message: 'Post not found' };
+    throw { statusCode: 404, message: 'Post not found' };
   }
 
   return post.likes;
@@ -363,7 +391,7 @@ const getPostLikesService = async (postId, page, limit) => {
 const getPostSharesService = async (postId, page, limit) => {
   // ✅ Validate postId
   if (!postId || !mongoose.Types.ObjectId.isValid(postId)) {
-    throw { status: 400, message: 'Invalid Post ID' };
+    throw { statusCode: 400, message: 'Invalid Post ID' };
   }
 
   // ✅ Find the post and populate shares
@@ -377,7 +405,7 @@ const getPostSharesService = async (postId, page, limit) => {
   });
 
   if (!post) {
-    throw { status: 404, message: 'Post not found' };
+    throw { statusCode: 404, message: 'Post not found' };
   }
 
   return post.shares;
@@ -387,13 +415,13 @@ const sharePostService = async ({ userId, sharedPostId, content = '', taggedUser
   // ✅ Ensure Shared Post Exists
   const sharedPost = await Post.findById(sharedPostId);
   if (!sharedPost) {
-    throw new Error('Shared post not found');
+    throw { statusCode: 404, message: 'Shared post not found' };
   }
 
   // ✅ Validate Tagged Users Exist
   if (taggedUsersIds.length !== 0) {
     if (!areValidObjectIds(taggedUsersIds) || !validateDocumentsExistence(User, taggedUsersIds)) {
-      throw new Error('One or more tagged users do not exist');
+      throw { statusCode: 400, message: 'Invalid or non-existent user IDs' };
     }
   }
 
@@ -421,7 +449,7 @@ const sharePostService = async ({ userId, sharedPostId, content = '', taggedUser
 const deletePostService = async (postId, userId) => {
   // ✅ Validate Post ObjectId
   if (!areValidObjectIds([postId])) {
-    const error = new Error(postId);
+    const error = new Error('Post not found');
     error.statusCode = 404;
     throw error;
   }

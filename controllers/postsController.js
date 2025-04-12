@@ -62,21 +62,14 @@ const createPostCtrl = asyncHandler(async (req, res) => {
  *
  *-------------------------------------------------------*/
 const getSinglePostCtrl = asyncHandler(async (req, res) => {
-  try {
-    const postId = req.params.id;
-
-    // Validate ObjectId format
-    if (!mongoose.Types.ObjectId.isValid(postId)) {
-      return res.status(400).json({ message: 'Invalid Post ID' });
-    }
-
-    // Call service function
-    const post = await getSinglePostService(postId);
-
-    res.status(200).json(post);
-  } catch (error) {
-    res.status(404).json({ message: error.message });
+  const postId = req.params.id;
+  // Validate ObjectId format
+  if (!mongoose.Types.ObjectId.isValid(postId)) {
+    return res.status(400).json({ message: 'Invalid Post ID' });
   }
+  // Call service function
+  const post = await getSinglePostService(postId);
+  res.status(200).json(post);
 });
 
 /**
@@ -113,28 +106,24 @@ const getFeedCtrl = asyncHandler(async (req, res) => {
  *
  *-------------------------------------------------------*/
 const editPostCtrl = asyncHandler(async (req, res) => {
-  try {
-    // Extract and validate token
-    const authHeader = req.headers.authorization;
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return res.status(401).json({ message: 'Unauthorized: No token provided' });
-    }
-    const token = authHeader.split(' ')[1];
-    const userId = getUserIdFromToken(token);
-
-    // Extract post ID and request body
-    const postId = req.params.id;
-    const UploadedFiles = req.mediaFilesData || [];
-    const postData = { ...req.body, UploadedFiles, userId };
-
-    // Call service function
-    const updatedPost = await editPostService(postId, postData);
-
-    // Return response
-    res.status(200).json({ message: 'Post updated successfully', updatedPost });
-  } catch (error) {
-    res.status(400).json({ message: error.message });
+  // Extract and validate token
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({ message: 'Unauthorized: No token provided' });
   }
+  const token = authHeader.split(' ')[1];
+  const userId = getUserIdFromToken(token);
+
+  // Extract post ID and request body
+  const postId = req.params.id;
+  const UploadedFiles = req.mediaFilesData || [];
+  const postData = { ...req.body, UploadedFiles, userId };
+
+  // Call service function
+  const updatedPost = await editPostService(postId, postData);
+
+  // Return response
+  res.status(200).json({ message: 'Post updated successfully', updatedPost });
 });
 
 /**-------------------------------------------------------
