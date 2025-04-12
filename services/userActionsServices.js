@@ -7,12 +7,16 @@ import User from '../models/user.js';
 const savePostService = async (userId, postId) => {
   // Validate IDs
   if (!areValidObjectIds([userId, postId])) {
-    throw { status: 400, message: 'Invalid ID(s) provided' };
+    const error = new Error('Invalid ID(s) provided');
+    error.statusCode = 400;
+    throw error;
   }
-
   // Check if post exists
-  if (!validateDocumentsExistence(Post, [postId])) {
-    throw { status: 404, message: 'Post not found' };
+  const PostIsExist = await validateDocumentsExistence(Post, [postId]);
+  if (!PostIsExist) {
+    const error = new Error('Post not found');
+    error.statusCode = 404;
+    throw error;
   }
 
   // Update userDetails to save post
@@ -32,12 +36,17 @@ const savePostService = async (userId, postId) => {
 const unsavePostService = async (userId, postId) => {
   // Validate IDs
   if (!areValidObjectIds([userId, postId])) {
-    throw { status: 400, message: 'Invalid ID(s) provided' };
+    const error = new Error('Invalid ID(s) provided');
+    error.statusCode = 400;
+    throw error;
   }
 
   // Check if post exists
-  if (!validateDocumentsExistence(Post, [postId])) {
-    throw { status: 404, message: 'Post not found' };
+  const PostIsExist = await validateDocumentsExistence(Post, [postId]);
+  if (!PostIsExist) {
+    const error = new Error('Post not found');
+    error.statusCode = 404;
+    throw error;
   }
 
   // Update userDetails to remove saved post
@@ -54,7 +63,9 @@ const unsavePostService = async (userId, postId) => {
 
 const getSavedPostsService = async (userId, page = 1, limit = 10) => {
   if (!areValidObjectIds([userId])) {
-    throw { status: 400, message: 'Invalid user ID' };
+    const error = new Error('Invalid user ID');
+    error.statusCode = 400;
+    throw error;
   }
 
   const userDetails = await UserDetails.findOne({ user: userId }).populate({
