@@ -12,6 +12,7 @@
   "description": "",
   "dependencies": {
     "@typegoose/typegoose": "^12.11.0",
+    "axios": "^1.8.4",
     "bcryptjs": "^3.0.2",
     "cloudinary": "^2.6.0",
     "cors": "^2.8.5",

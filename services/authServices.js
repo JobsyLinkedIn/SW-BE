@@ -2,6 +2,7 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import User from '../models/user.js';
 import transporter from '../config/email.js';
+import axios from 'axios';
 
 import { OAuth2Client } from 'google-auth-library';
 
