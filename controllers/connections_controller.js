@@ -9,6 +9,7 @@ import get_pending_requests_service from '../services/connections/get_list_of_pe
 import blockUser from '../services/connections/block_user_service.js';
 import unblockUser from '../services/connections/unblock_user_service.js';
 import createMessageRequest from '../services/connections/message_request_for_nonconnections_service.js';
+import get_message_requests from '../services/connections/get_all_message_request_service.js';
 
 export const search_user = async (req, res) => {
   try {
@@ -120,5 +121,15 @@ export const sendMessageRequest = async (req, res) => {
     res.status(201).json({ message: 'Message request sent successfully' });
   } catch (err) {
     res.status(500).json({ message: 'Error creating message request:', error: err.message });
+  }
+};
+
+export const getAllMessageRequests = async (req, res) => {
+  const userId = req.params.id;
+  try {
+    const messageRequests = await get_message_requests(userId);
+    res.status(200).json(messageRequests);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
   }
 };

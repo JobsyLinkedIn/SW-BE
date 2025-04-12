@@ -16,4 +16,5 @@ router.get('/pending', connections_controller.get_pending_requests);
 router.post('/block', connections_controller.block_user);
 router.post('/unblock', connections_controller.unblock_user);
 router.post('/message', connections_controller.sendMessageRequest);
+router.get('/getRequest/:id',connections_controller.getAllMessageRequests);
 export default router;
