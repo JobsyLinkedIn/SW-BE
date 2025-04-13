@@ -1,14 +1,8 @@
 import Profile from '../models/profileModel.js';
-import jwt from 'jsonwebtoken';
 
-const getUserIdFromToken = (token) => {
-  const decoded = jwt.verify(token, process.env.JWT_SECRET);
-  return decoded.userId;
-};
-
-const createOrUpdateProfile = async (token, profileData) => {
+const createOrUpdateProfile = async (req, profileData) => {
   const { name, bio, location } = profileData;
-  const userId = getUserIdFromToken(token);
+  const userId = req.user._id; // Use user from middleware
   let profile = await Profile.findOne({ userId });
 
   if (profile) {
@@ -23,18 +17,23 @@ const createOrUpdateProfile = async (token, profileData) => {
   return profile;
 };
 
-const uploadProfilePicture = async (token, profilePicture) => {
-  const userId = getUserIdFromToken(token);
+const uploadProfilePicture = async (req) => {
+  const userId = req.user._id; // Use user from middleware
   const profile = await Profile.findOne({ userId });
   if (!profile) throw new Error('Profile not found');
 
-  profile.profilePicture = profilePicture.path;
+  if (!req.mediaFilesData || req.mediaFilesData.length === 0) {
+    throw new Error('No file uploaded');
+  }
+
+  const uploadedFile = req.mediaFilesData[0]; // Assuming only one file is uploaded
+  profile.profilePicture = uploadedFile.secure_url;
   await profile.save();
   return profile;
 };
 
-const deleteProfilePicture = async (token) => {
-  const userId = getUserIdFromToken(token);
+const deleteProfilePicture = async (req) => {
+  const userId = req.user._id; // Use user from middleware
   const profile = await Profile.findOne({ userId });
   if (!profile) throw new Error('Profile not found');
 
@@ -43,18 +42,23 @@ const deleteProfilePicture = async (token) => {
   return profile;
 };
 
-const uploadCoverPhoto = async (token, coverPhoto) => {
-  const userId = getUserIdFromToken(token);
+const uploadCoverPhoto = async (req) => {
+  const userId = req.user._id; // Use user from middleware
   const profile = await Profile.findOne({ userId });
   if (!profile) throw new Error('Profile not found');
 
-  profile.coverPhoto = coverPhoto.path;
+  if (!req.mediaFilesData || req.mediaFilesData.length === 0) {
+    throw new Error('No file uploaded');
+  }
+
+  const uploadedFile = req.mediaFilesData[0]; // Assuming only one file is uploaded
+  profile.coverPhoto = uploadedFile.secure_url;
   await profile.save();
   return profile;
 };
 
-const deleteCoverPhoto = async (token) => {
-  const userId = getUserIdFromToken(token);
+const deleteCoverPhoto = async (req) => {
+  const userId = req.user._id; // Use user from middleware
   const profile = await Profile.findOne({ userId });
   if (!profile) throw new Error('Profile not found');
 
@@ -63,78 +67,25 @@ const deleteCoverPhoto = async (token) => {
   return profile;
 };
 
-const uploadResume = async (token, resume) => {
-  const userId = getUserIdFromToken(token);
+const uploadResume = async (req) => {
+  const userId = req.user._id; // Use user from middleware
   const profile = await Profile.findOne({ userId });
   if (!profile) throw new Error('Profile not found');
 
-  profile.resume = resume.path;
-  await profile.save();
-  return profile;
-};
-
-const addWorkExperience = async (token, workExperience) => {
-  const userId = getUserIdFromToken(token);
-  const profile = await Profile.findOne({ userId });
-  if (!profile) throw new Error('Profile not found');
-
-  if (workExperience) {
-    profile.workExperience.push(workExperience);
+  if (!req.mediaFilesData || req.mediaFilesData.length === 0) {
+    throw new Error('No file uploaded');
   }
+
+  const uploadedFile = req.mediaFilesData[0]; // Assuming only one file is uploaded
+  profile.resume = uploadedFile.secure_url;
   await profile.save();
   return profile;
 };
 
-const addEducation = async (token, education) => {
-  const userId = getUserIdFromToken(token);
-  const profile = await Profile.findOne({ userId });
-  if (!profile) throw new Error('Profile not found');
-
-  profile.education.push(education);
-  await profile.save();
-  return profile;
-};
-
-const addSkills = async (token, skills) => {
-  const userId = getUserIdFromToken(token);
-  const profile = await Profile.findOne({ userId });
-  if (!profile) throw new Error('Profile not found');
-
-  profile.skills.push(...skills);
-  await profile.save();
-  return profile;
-};
-
-const updatePrivacySettings = async (token, privacySettings) => {
-  const userId = getUserIdFromToken(token);
-  const profile = await Profile.findOne({ userId });
-  if (!profile) throw new Error('Profile not found');
-
-  profile.privacySettings = privacySettings;
-  await profile.save();
-  return profile;
-};
-
-const viewUserProfile = async (token) => {
-  const userId = getUserIdFromToken(token);
+const viewUserProfile = async (req) => {
+  const userId = req.user._id; // Use user from middleware
   const profile = await Profile.findOne({ userId }).populate('followers');
   if (!profile) throw new Error('Profile not found');
-
-  return profile;
-};
-
-const followUser = async (token, followUserToken) => {
-  const userId = getUserIdFromToken(token);
-  const followUserId = getUserIdFromToken(followUserToken);
-  const profile = await Profile.findOne({ userId });
-  const followProfile = await Profile.findOne({ userId: followUserId });
-
-  if (!profile || !followProfile) throw new Error('Profile not found');
-
-  if (!profile.followers.includes(followUserId)) {
-    profile.followers.push(followUserId);
-    await profile.save();
-  }
 
   return profile;
 };
@@ -146,10 +97,5 @@ export {
   uploadCoverPhoto,
   deleteCoverPhoto,
   uploadResume,
-  addWorkExperience,
-  addEducation,
-  addSkills,
-  updatePrivacySettings,
   viewUserProfile,
-  followUser,
 };
