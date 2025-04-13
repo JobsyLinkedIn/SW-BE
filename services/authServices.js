@@ -2,7 +2,9 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import User from '../models/user.js';
 import transporter from '../config/email.js';
+import axios from 'axios';
 
+import UserDetails from '../models/user_details.js';
 import { OAuth2Client } from 'google-auth-library';
 
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
@@ -54,7 +56,17 @@ const registerUser = async ({ name, email, password }) => {
 
   user = new User({ name, email, password: hashedPassword });
   await user.save();
-
+  let userDetails = new UserDetails({
+    user: user._id,
+    industry: null,
+    location: null,
+    followers: [],
+    skills: [],
+    savedPosts: [],
+    blockedUsers: [],
+  });
+  await userDetails.save();
+  
   const token = jwt.sign({ email }, process.env.JWT_SECRET, {
     expiresIn: '1h',
   });
