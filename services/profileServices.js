@@ -82,12 +82,65 @@ const uploadResume = async (req) => {
   return profile;
 };
 
+const addWorkExperience = async (req, workExperienceData) => {
+  const userId = req.user._id; // Use user from middleware
+  const profile = await Profile.findOne({ userId });
+  if (!profile) throw new Error('Profile not found');
+
+  profile.workExperience.push(workExperienceData);
+  await profile.save();
+  return profile;
+};
+
+const addEducation = async (req, educationData) => {
+  const userId = req.user._id; // Use user from middleware
+  const profile = await Profile.findOne({ userId });
+  if (!profile) throw new Error('Profile not found');
+
+  profile.education.push(educationData);
+  await profile.save();
+  return profile;
+};
+
+const addSkills = async (req, skillsData) => {
+  const userId = req.user._id; // Use user from middleware
+  const profile = await Profile.findOne({ userId });
+  if (!profile) throw new Error('Profile not found');
+
+  profile.skills = [...new Set([...profile.skills, ...skillsData])]; // Avoid duplicates
+  await profile.save();
+  return profile;
+};
+
+const updatePrivacySettings = async (req, privacySettings) => {
+  const userId = req.user._id; // Use user from middleware
+  const profile = await Profile.findOne({ userId });
+  if (!profile) throw new Error('Profile not found');
+
+  profile.privacySettings = privacySettings;
+  await profile.save();
+  return profile;
+};
+
 const viewUserProfile = async (req) => {
   const userId = req.user._id; // Use user from middleware
   const profile = await Profile.findOne({ userId }).populate('followers');
   if (!profile) throw new Error('Profile not found');
 
   return profile;
+};
+
+const followUser = async (req, targetUserId) => {
+  const userId = req.user._id; // Use user from middleware
+  const targetProfile = await Profile.findOne({ userId: targetUserId });
+  if (!targetProfile) throw new Error('Target user not found');
+
+  if (!targetProfile.followers.includes(userId)) {
+    targetProfile.followers.push(userId);
+    await targetProfile.save();
+  }
+
+  return targetProfile;
 };
 
 export {
@@ -97,5 +150,10 @@ export {
   uploadCoverPhoto,
   deleteCoverPhoto,
   uploadResume,
+  addWorkExperience,
+  addEducation,
+  addSkills,
+  updatePrivacySettings,
   viewUserProfile,
+  followUser,
 };
