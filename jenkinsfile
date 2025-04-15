@@ -8,6 +8,8 @@ pipeline {
         AZURE_SSH_KEY = '/var/jenkins_home/.ssh/JOBSY-UBUNTU.pem'  // Path to your private key in Jenkins container
         AZURE_SERVER_IP = '74.162.41.144'  // Azure server IP
         AZURE_USERNAME = 'kassem'  // SSH username
+        REPO_URL = 'git@github.com:JobsyLinkedIn/SW-BE.git'  // GitHub repository URL
+        WORK_DIR = '/home/kassem/SW-BE'  // Working directory on the server
     }
 
     stages {
@@ -58,11 +60,13 @@ pipeline {
                     // SSH into Azure server, clone repo, and start containers
                     sh """
                     ssh -i ${AZURE_SSH_KEY} ${AZURE_USERNAME}@${AZURE_SERVER_IP} "
-                        cd /home/kassem && \
-                        rm -rf SW-BE && \
-                        git clone git@github.com:JobsyLinkedIn/SW-BE.git && \
-                        cd SW-BE && \
-                        docker-compose up -d || echo 'Docker Compose failed'
+                        if [ -d \"${WORK_DIR}\" ]; then
+                            echo 'Directory exists, pulling latest changes'
+                            cd ${WORK_DIR} && git pull origin main && docker-compose down && docker-compose up -d
+                        else
+                            echo 'Cloning repository'
+                            git clone ${REPO_URL} ${WORK_DIR} && cd ${WORK_DIR} && docker-compose up -d
+                        fi
                     "
                     """
                 }
