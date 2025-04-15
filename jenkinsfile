@@ -62,7 +62,9 @@ pipeline {
                     ssh -i ${AZURE_SSH_KEY} ${AZURE_USERNAME}@${AZURE_SERVER_IP} "
                         if [ -d \"${WORK_DIR}\" ]; then
                             echo 'Directory exists, pulling latest changes'
-                            cd ${WORK_DIR} && git pull origin main && docker-compose down && docker-compose up -d
+                            cd ${WORK_DIR} && git pull origin main && docker-compose down && \
+                            docker ps -aq -f name=mongo | xargs -r docker rm -f && \
+                            docker-compose up -d
                         else
                             echo 'Cloning repository'
                             git clone ${REPO_URL} ${WORK_DIR} && cd ${WORK_DIR} && docker-compose up -d
