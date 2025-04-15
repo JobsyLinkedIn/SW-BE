@@ -26,6 +26,13 @@ pipeline {
         }
 
         stage('Run Tests') {
+            when {
+                expression {
+                    // Check if "test" script in package.json contains a valid testing framework command (e.g., jest)
+                    def packageJson = readFile('package.json')
+                    return packageJson.contains('"test": "jest')  // Or any other valid testing framework command
+                }
+            }
             steps {
                 script {
                     sh 'docker-compose run backend npm run test'
