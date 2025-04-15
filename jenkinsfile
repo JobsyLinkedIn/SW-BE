@@ -1,88 +1,10 @@
 pipeline {
-    agent any
-
-    environment {
-        IMAGE_NAME = 'backend'
-        REGISTRY = 'docker.io'  // Change this to your Docker registry if you're using one
-        DOCKER_IMAGE = "${REGISTRY}/${IMAGE_NAME}:latest"
-        AZURE_SSH_KEY = '/var/jenkins_home/.ssh/JOBSY-UBUNTU.pem'  // Path to your private key in Jenkins container
-        AZURE_SERVER_IP = '74.162.41.144'  // Azure server IP
-        AZURE_USERNAME = 'kassem'  // SSH username
-        REPO_URL = 'git@github.com:JobsyLinkedIn/SW-BE.git'  // GitHub repository URL
-        WORK_DIR = '/home/kassem/SW-BE'  // Working directory on the server
+  agent any
+  stages {
+    stage('Debug Branch') {
+      steps {
+        echo "Branch Name: ${env.BRANCH_NAME}"
+      }
     }
-
-    stages {
-        stage('Checkout') {
-            steps {
-                checkout scm
-            }
-        }
-
-        stage('Build Docker Image') {
-            steps {
-                script {
-                    sh 'docker-compose build backend'
-                }
-            }
-        }
-
-        stage('Run Tests') {
-            steps {
-                script {
-                    // Run tests only if defined, else continue
-                    sh 'docker-compose run backend npm run test || echo "No tests defined"'
-                }
-            }
-        }
-
-        stage('Push Docker Image') {
-            when {
-                branch 'main'
-            }
-            steps {
-                script {
-                    // Authenticate to Docker Hub
-                    withCredentials([usernamePassword(credentialsId: 'docker-hub-credentials', usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD')]) {
-                        sh """
-                        echo $DOCKER_PASSWORD | docker login -u $DOCKER_USERNAME --password-stdin
-                        docker tag backend ${DOCKER_IMAGE}
-                        docker push ${DOCKER_IMAGE}
-                        """
-                    }
-                }
-            }
-        }
-
-        stage('Deploy to Azure') {
-            steps {
-                script {
-                    // SSH into Azure server, clone repo, and start containers
-                    sh """
-                    ssh -i ${AZURE_SSH_KEY} ${AZURE_USERNAME}@${AZURE_SERVER_IP} "
-                        if [ -d \"${WORK_DIR}\" ]; then
-                            echo 'Directory exists, pulling latest changes'
-                            cd ${WORK_DIR} && git pull origin main && docker-compose down && \
-                            docker ps -aq -f name=mongo | xargs -r docker rm -f && \
-                            docker-compose up -d
-                        else
-                            echo 'Cloning repository'
-                            git clone ${REPO_URL} ${WORK_DIR} && cd ${WORK_DIR} && docker-compose up -d
-                        fi
-                    "
-                    """
-                }
-            }
-        }
-    }
-
-    post {
-        success {
-            echo 'Build and deployment completed successfully!'
-        }
-
-        failure {
-            echo 'Build or deployment failed!'
-        }
-    }
+  }
 }
