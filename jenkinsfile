@@ -58,8 +58,9 @@ pipeline {
                     // SSH into Azure server, pull Docker image, and start containers
                     sh """
                     ssh -i ${AZURE_SSH_KEY} ${AZURE_USERNAME}@${AZURE_SERVER_IP} "
-                        docker pull ${DOCKER_IMAGE} || echo 'Failed to pull image'
-                        docker-compose -f /path/to/docker-compose.yml up -d || echo 'Docker Compose failed'
+                        cd /home/kassem && git clone git@github.com:JobsyLinkedIn/SW-BE.git && \
+                        cd SW-BE/backend && \
+                        docker-compose up -d || echo 'Docker Compose failed'
                     "
                     """
                 }
