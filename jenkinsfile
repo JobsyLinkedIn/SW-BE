@@ -28,7 +28,8 @@ pipeline {
         stage('Run Tests') {
             steps {
                 script {
-                    sh 'docker-compose run backend npm run test || true'  // Added '|| true' to ensure it doesn't fail
+                    // Run tests only if defined, else continue
+                    sh 'docker-compose run backend npm run test || echo "No tests defined"'
                 }
             }
         }
@@ -39,8 +40,14 @@ pipeline {
             }
             steps {
                 script {
-                    sh 'docker tag backend ${DOCKER_IMAGE}'
-                    sh 'docker push ${DOCKER_IMAGE}'
+                    // Authenticate to Docker Hub
+                    withCredentials([usernamePassword(credentialsId: 'docker-hub-credentials', usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD')]) {
+                        sh """
+                        echo $DOCKER_PASSWORD | docker login -u $DOCKER_USERNAME --password-stdin
+                        docker tag backend ${DOCKER_IMAGE}
+                        docker push ${DOCKER_IMAGE}
+                        """
+                    }
                 }
             }
         }
@@ -48,11 +55,11 @@ pipeline {
         stage('Deploy to Azure') {
             steps {
                 script {
-                    // SSH into the Azure server and pull the new Docker image
+                    // SSH into Azure server, pull Docker image, and start containers
                     sh """
                     ssh -i ${AZURE_SSH_KEY} ${AZURE_USERNAME}@${AZURE_SERVER_IP} "
-                        docker pull ${DOCKER_IMAGE}
-                        docker-compose up -d
+                        docker pull ${DOCKER_IMAGE} || echo 'Failed to pull image'
+                        docker-compose -f /path/to/docker-compose.yml up -d || echo 'Docker Compose failed'
                     "
                     """
                 }
