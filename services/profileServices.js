@@ -107,7 +107,12 @@ const addSkills = async (req, skillsData) => {
   const profile = await Profile.findOne({ userId });
   if (!profile) throw new Error('Profile not found');
 
-  profile.skills = [...new Set([...profile.skills, ...skillsData])]; // Avoid duplicates
+  // Validate that skillsData is an array
+  if (!Array.isArray(skillsData)) {
+    throw new Error('skillsData must be an array');
+  }
+
+  profile.skills.push(...skillsData); // Spread operator to add multiple skills
   await profile.save();
   return profile;
 };

@@ -80,15 +80,6 @@ const addEducation = async (req, res) => {
   }
 };
 
-const addSkills = async (req, res) => {
-  try {
-    const response = await profileService.addSkills(req, req.body.skills);
-    res.status(200).json(response);
-  } catch (error) {
-    console.error(error);
-    res.status(400).json({ msg: error.message });
-  }
-};
 
 const updatePrivacySettings = async (req, res) => {
   try {
@@ -119,6 +110,17 @@ const followUser = async (req, res) => {
     res.status(400).json({ msg: error.message });
   }
 };
+
+const addSkills = async (req, res) => {
+  try {
+    const response = await profileService.addSkills(req, req.body.skillsData);
+    res.status(200).json(response);
+  } catch (error) {
+    console.error(error);
+    res.status(400).json({ msg: error.message });
+  }
+};
+
 
 export {
   createOrUpdateProfile,
