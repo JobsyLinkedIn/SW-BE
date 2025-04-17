@@ -122,6 +122,36 @@ const addSkills = async (req, res) => {
 };
 
 
+const deleteWorkExperience = async (req, res) => {
+  try {
+    const response = await profileService.deleteWorkExperience(req, req.params.id);
+    res.status(200).json(response);
+  } catch (error) {
+    console.error(error);
+    res.status(400).json({ msg: error.message });
+  }
+};
+
+const deleteEducation = async (req, res) => {
+  try {
+    const response = await profileService.deleteEducation(req, req.params.id);
+    res.status(200).json(response);
+  } catch (error) {
+    console.error(error);
+    res.status(400).json({ msg: error.message });
+  }
+};
+
+const deleteSkills = async (req, res) => {
+  try {
+    const response = await profileService.deleteSkills(req, req.body.skillsToDelete);
+    res.status(200).json(response);
+  } catch (error) {
+    console.error(error);
+    res.status(400).json({ msg: error.message });
+  }
+};
+
 export {
   createOrUpdateProfile,
   uploadProfilePicture,
@@ -132,6 +162,9 @@ export {
   addWorkExperience,
   addEducation,
   addSkills,
+  deleteWorkExperience, 
+  deleteEducation, 
+  deleteSkills, 
   updatePrivacySettings,
   viewUserProfile,
   followUser,

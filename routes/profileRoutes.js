@@ -15,6 +15,9 @@ import {
   updatePrivacySettings,
   viewUserProfile,
   followUser,
+  deleteWorkExperience,
+  deleteEducation, 
+  deleteSkills, 
 } from '../controllers/profileController.js';
 
 const router = express.Router();
@@ -57,8 +60,11 @@ router.post(
 
 // Other profile-related routes
 router.post('/work-experience', addWorkExperience);
+router.delete('/work-experience/:id', deleteWorkExperience); 
 router.post('/education', addEducation);
+router.delete('/education/:id', deleteEducation); 
 router.post('/skills', addSkills);
+router.delete('/skills', deleteSkills); 
 router.put('/privacy', updatePrivacySettings);
 router.get('/', viewUserProfile);
 router.post('/follow', followUser);
