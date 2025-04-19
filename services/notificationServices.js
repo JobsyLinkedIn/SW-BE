@@ -1,7 +1,7 @@
 import { notifications } from '../models/notifications.js';
 
-export const createNotificationService = async (data) => {
-  const { userId, fromUserId, type, content, postId, redirectUrl, iconType } = data;
+export const createNotificationService = async (data,io) => {
+  const { userId, fromUserId, type, content, postId, redirectUrl } = data;
 
   if (!userId || !fromUserId) {
     throw new Error('Both userId (receiver) and fromUserId (sender) must be provided');
@@ -23,11 +23,16 @@ export const createNotificationService = async (data) => {
     content,
     postId,
     redirectUrl,
-    iconType,
   });
 
-  return await notification.save();
+  const savednot= await notification.save();
+  if (io && data.userId) {
+    io.to(data.userId.toString()).emit('new-notification', savednot);
+  }
+
+  return savednot;
 };
+  
 
 export const getUserNotificationsService = async (userId) => {
   return await notifications.find({ userId }).sort({ createdAt: -1 });

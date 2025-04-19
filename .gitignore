@@ -6,3 +6,5 @@ Module2.yaml
 .vscode/
 upload_cache/*
 !/upload_cache/.gitkeep
+.env
+.env
