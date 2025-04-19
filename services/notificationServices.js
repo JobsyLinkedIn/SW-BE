@@ -1,6 +1,6 @@
 import { notifications } from '../models/notifications.js';
 
-export const createNotificationService = async (data,io) => {
+export const createNotificationService = async (data, io) => {
   const { userId, fromUserId, type, content, postId, redirectUrl } = data;
 
   if (!userId || !fromUserId) {
@@ -11,7 +11,7 @@ export const createNotificationService = async (data,io) => {
     throw new Error('Notification must have content or a related postId');
   }
 
-  const validTypes = ['like', 'comment', 'message'];
+  const validTypes = ['react', 'comment', 'message', 'connection', 'mention'];
   if (!validTypes.includes(type)) {
     throw new Error(`Invalid notification type. Valid types are: ${validTypes.join(', ')}`);
   }
@@ -25,17 +25,23 @@ export const createNotificationService = async (data,io) => {
     redirectUrl,
   });
 
-  const savednot= await notification.save();
-  if (io && data.userId) {
-    io.to(data.userId.toString()).emit('new-notification', savednot);
+  const savedNotification = await notification.save();
+
+  if (io && userId) {
+    io.to(userId.toString()).emit('new-notification', savedNotification);
   }
 
-  return savednot;
+  return savedNotification;
 };
+
   
 
 export const getUserNotificationsService = async (userId) => {
   return await notifications.find({ userId }).sort({ createdAt: -1 });
+};
+
+export const getNotificationByIdService = async (notificationId) => {
+  return await notifications.findById(notificationId);
 };
 
 export const markAsReadService = async (notificationId) => {
