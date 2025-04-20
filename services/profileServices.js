@@ -2,7 +2,7 @@ import Profile from '../models/profileModel.js';
 
 const createOrUpdateProfile = async (req, profileData) => {
   const { name, bio, location } = profileData;
-  const userId = req.user._id; // Use user from middleware
+  const userId = req.user._id; 
   let profile = await Profile.findOne({ userId });
 
   if (profile) {
@@ -18,7 +18,7 @@ const createOrUpdateProfile = async (req, profileData) => {
 };
 
 const uploadProfilePicture = async (req) => {
-  const userId = req.user._id; // Use user from middleware
+  const userId = req.user._id; 
   const profile = await Profile.findOne({ userId });
   if (!profile) throw new Error('Profile not found');
 
@@ -34,7 +34,7 @@ const uploadProfilePicture = async (req) => {
 
 
 const deleteProfilePicture = async (req) => {
-  const userId = req.user._id; // Use user from middleware
+  const userId = req.user._id; 
   const profile = await Profile.findOne({ userId });
   if (!profile) throw new Error('Profile not found');
 
@@ -44,7 +44,7 @@ const deleteProfilePicture = async (req) => {
 };
 
 const uploadCoverPhoto = async (req) => {
-  const userId = req.user._id; // Use user from middleware
+  const userId = req.user._id; 
   const profile = await Profile.findOne({ userId });
   if (!profile) throw new Error('Profile not found');
 
@@ -52,14 +52,14 @@ const uploadCoverPhoto = async (req) => {
     throw new Error('No file uploaded');
   }
 
-  const uploadedFile = req.mediaFilesData[0]; // Assuming only one file is uploaded
+  const uploadedFile = req.mediaFilesData[0];
   profile.coverPhoto = uploadedFile.secure_url;
   await profile.save();
   return { message: 'Cover photo uploaded successfully',coverPhoto: profile.coverPhoto };
 };
 
 const deleteCoverPhoto = async (req) => {
-  const userId = req.user._id; // Use user from middleware
+  const userId = req.user._id; 
   const profile = await Profile.findOne({ userId });
   if (!profile) throw new Error('Profile not found');
 
@@ -69,7 +69,7 @@ const deleteCoverPhoto = async (req) => {
 };
 
 const uploadResume = async (req) => {
-  const userId = req.user._id; // Use user from middleware
+  const userId = req.user._id; 
   const profile = await Profile.findOne({ userId });
   if (!profile) throw new Error('Profile not found');
 
@@ -77,14 +77,14 @@ const uploadResume = async (req) => {
     throw new Error('No file uploaded');
   }
 
-  const uploadedFile = req.mediaFilesData[0]; // Assuming only one file is uploaded
+  const uploadedFile = req.mediaFilesData[0];
   profile.resume = uploadedFile.secure_url;
   await profile.save();
   return { message: 'Resume uploaded successfully'};
 };
 
 const addWorkExperience = async (req, workExperienceData) => {
-  const userId = req.user._id; // Use user from middleware
+  const userId = req.user._id; 
   const profile = await Profile.findOne({ userId });
   if (!profile) throw new Error('Profile not found');
 
@@ -94,7 +94,7 @@ const addWorkExperience = async (req, workExperienceData) => {
 };
 
 const addEducation = async (req, educationData) => {
-  const userId = req.user._id; // Use user from middleware
+  const userId = req.user._id; 
   const profile = await Profile.findOne({ userId });
   if (!profile) throw new Error('Profile not found');
 
@@ -104,7 +104,7 @@ const addEducation = async (req, educationData) => {
 };
 
 const addSkills = async (req, skillsData) => {
-  const userId = req.user._id; // Use user from middleware
+  const userId = req.user._id; 
   const profile = await Profile.findOne({ userId });
   if (!profile) throw new Error('Profile not found');
 
@@ -113,13 +113,13 @@ const addSkills = async (req, skillsData) => {
     throw new Error('skillsData must be an array');
   }
 
-  profile.skills.push(...skillsData); // Spread operator to add multiple skills
+  profile.skills.push(...skillsData); 
   await profile.save();
   return { message: 'Skills added successfully'};
 };
 
 const updatePrivacySettings = async (req, privacySettings) => {
-  const userId = req.user._id; // Use user from middleware
+  const userId = req.user._id; 
   const profile = await Profile.findOne({ userId });
   if (!profile) throw new Error('Profile not found');
 
@@ -129,7 +129,7 @@ const updatePrivacySettings = async (req, privacySettings) => {
 };
 
 const viewUserProfile = async (req) => {
-  const userId = req.user._id; // Use user from middleware
+  const userId = req.user._id; 
   const profile = await Profile.findOne({ userId }).populate('followers');
   if (!profile) throw new Error('Profile not found');
 
@@ -137,7 +137,7 @@ const viewUserProfile = async (req) => {
 };
 
 const followUser = async (req, targetUserId) => {
-  const userId = req.user._id; // Use user from middleware
+  const userId = req.user._id; 
   const targetProfile = await Profile.findOne({ userId: targetUserId });
   if (!targetProfile) throw new Error('Target user not found');
 
@@ -150,11 +150,10 @@ const followUser = async (req, targetUserId) => {
 };
 
 const deleteWorkExperience = async (req, workExperienceId) => {
-  const userId = req.user._id; // Use user from middleware
+  const userId = req.user._id; 
   const profile = await Profile.findOne({ userId });
   if (!profile) throw new Error('Profile not found');
 
-  // Filter out the work experience with the given ID
   profile.workExperience = profile.workExperience.filter(
     (experience) => experience._id.toString() !== workExperienceId
   );
@@ -164,11 +163,10 @@ const deleteWorkExperience = async (req, workExperienceId) => {
 };
 
 const deleteEducation = async (req, educationId) => {
-  const userId = req.user._id; // Use user from middleware
+  const userId = req.user._id; 
   const profile = await Profile.findOne({ userId });
   if (!profile) throw new Error('Profile not found');
 
-  // Filter out the education with the given ID
   profile.education = profile.education.filter(
     (education) => education._id.toString() !== educationId
   );
@@ -178,11 +176,10 @@ const deleteEducation = async (req, educationId) => {
 };
 
 const deleteSkills = async (req, skillsToDelete) => {
-  const userId = req.user._id; // Use user from middleware
+  const userId = req.user._id; 
   const profile = await Profile.findOne({ userId });
   if (!profile) throw new Error('Profile not found');
 
-  // Remove the specified skills from the profile
   profile.skills = profile.skills.filter(
     (skill) => !skillsToDelete.includes(skill)
   );

@@ -22,6 +22,8 @@ const userSchema = new mongoose.Schema({
   },
   connections: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User', default: [] }],
   pendingRequests: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User', default: [] }],
+  appliedJobs: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Job' }],
+  savedJobs: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Job' }],
 });
 
 const User = mongoose.model('User', userSchema, 'User');
