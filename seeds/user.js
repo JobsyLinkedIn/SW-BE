@@ -25,6 +25,7 @@ const seedUsers = async () => {
         profilePicture: 'http://example.com/profile.jpg',
         resume: 'http://example.com/resume.pdf',
         subscriptionPlan: 'Premium',
+        connectionPrivacy: 'no-one',
         createdAt: new Date(),
         updatedAt: new Date(),
         company: companyMap['Tech Corp'],

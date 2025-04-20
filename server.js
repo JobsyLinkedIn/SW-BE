@@ -14,7 +14,7 @@ import NotificationRoutes from './routes/notification.js';
 import http from 'http';
 import { Server as SocketIOServer } from 'socket.io';
 import companyRoutes from './routes/company.js';
-
+import privacyRoutes from './routes/privacy.js';
 const app = express();
 const PORT = process.env.PORT || 3000;
 const server = http.createServer(app); 
@@ -55,7 +55,8 @@ app.use('/api/posts', postRoutes); //Posts Routes
 app.use('/api/user/actions', userActionsRoutes); //User Actions Route
 app.use('/api/users', connectionRoutes);
 app.use('/api/notifications', NotificationRoutes); //Notifications Route
-
+app.use('/api',companyRoutes);
+app.use('/api/privacy',privacyRoutes);
 
 
 // 🔴 Place this at the end (AFTER routes)

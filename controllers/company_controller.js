@@ -3,6 +3,7 @@ import updateCompany from "../services/company/update_company_service.js";
 import  createJobService  from "../services/company/job_posting_service.js";
 import getCompanyJobAnalytics from "../services/company/get_analytics_service.js";
 import getCompanyJobApplications from "../services/company/get_application_service.js";
+import remove_follower_service from "../services/company/remove_follower_service.js";
 export const createCompanyController = async (req, res) => {
   try {
     const companyData = req.body;
@@ -69,5 +70,16 @@ export const fetchJobAnalytics = async (req, res) => {
     res.status(200).json(data);
   } catch (err) {
     res.status(500).json({ message: err.message });
+  }
+};
+
+export const removeFollowerController = async (req, res) => {
+  try {
+    const { companyId, userId } = req.params;
+
+    const result = await remove_follower_service(companyId, userId);
+    return res.status(200).json(result);
+  } catch (error) {
+    return res.status(400).json({ error: error.message });
   }
 };

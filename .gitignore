@@ -1,3 +1,4 @@
+.env
 node_modules/
 FE/
 SW_BE.drawio.pdf
@@ -6,6 +7,3 @@ Module2.yaml
 .vscode/
 upload_cache/*
 !/upload_cache/.gitkeep
-.env
-
-.env

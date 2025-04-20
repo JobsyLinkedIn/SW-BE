@@ -8,6 +8,7 @@ router.put('/company/:companyId', authenticateUser,company_controller.updateComp
 router.post('/job', authenticateUser, company_controller.createJobController);
 router.get('/company/:companyId/applications', authenticateUser, company_controller.fetchJobApplications);
 router.get('/company/:companyId/analytics', authenticateUser, company_controller.fetchJobAnalytics);
+router.delete('/:companyId/followers/:userId',authenticateUser ,company_controller.removeFollowerController);
 
 
 export default router;
