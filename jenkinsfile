@@ -3,19 +3,27 @@ pipeline {
 
     environment {
         IMAGE_NAME = 'backend'
-        REGISTRY = 'docker.io'  // Change this to your Docker registry if you're using one
+        REGISTRY = 'docker.io'
         DOCKER_IMAGE = "${REGISTRY}/${IMAGE_NAME}:latest"
-        AZURE_SSH_KEY = '/var/jenkins_home/.ssh/JOBSY-UBUNTU.pem'  // Path to your private key in Jenkins container
-        AZURE_SERVER_IP = '74.162.41.144'  // Azure server IP
-        AZURE_USERNAME = 'kassem'  // SSH username
-        REPO_URL = 'git@github.com:JobsyLinkedIn/SW-BE.git'  // GitHub repository URL
-        WORK_DIR = '/home/kassem/SW-BE'  // Working directory on the server
+        AZURE_SSH_KEY = '/var/jenkins_home/.ssh/JOBSY-UBUNTU.pem'
+        AZURE_SERVER_IP = '74.162.41.144'
+        AZURE_USERNAME = 'kassem'
+        REPO_URL = 'git@github.com:JobsyLinkedIn/SW-BE.git'
+        WORK_DIR = '/home/kassem/SW-BE'
     }
 
     stages {
         stage('Checkout') {
             steps {
                 checkout scm
+            }
+        }
+
+        stage('Prepare .env') {
+            steps {
+                withCredentials([file(credentialsId: 'env-file-jobsy', variable: 'ENV_FILE')]) {
+                    sh 'cp $ENV_FILE .env'
+                }
             }
         }
 
@@ -30,7 +38,6 @@ pipeline {
         stage('Run Tests') {
             steps {
                 script {
-                    // Run tests only if defined, else continue
                     sh 'docker-compose run --rm backend npm run test || echo "No tests defined"'
                 }
             }
@@ -44,7 +51,6 @@ pipeline {
             }
             steps {
                 script {
-                    // Authenticate to Docker Hub
                     withCredentials([usernamePassword(credentialsId: 'docker-hub-credentials', usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD')]) {
                         sh """
                         echo $DOCKER_PASSWORD | docker login -u $DOCKER_USERNAME --password-stdin
@@ -59,7 +65,6 @@ pipeline {
         stage('Deploy to Azure') {
             steps {
                 script {
-                    // SSH into Azure server, clone repo, and start containers
                     sh """
                     ssh -i ${AZURE_SSH_KEY} ${AZURE_USERNAME}@${AZURE_SERVER_IP} "
                         if [ -d \\"${WORK_DIR}\\" ]; then
@@ -82,11 +87,8 @@ pipeline {
         success {
             echo 'Build and deployment completed successfully!'
         }
-
         failure {
             echo 'Build or deployment failed!'
         }
     }
 }
-
-
