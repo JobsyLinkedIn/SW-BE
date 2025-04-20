@@ -2,8 +2,8 @@ import search_user_service from '../services/connections/search_service.js';
 import send_connection_request_service from '../services/connections/send_connection_service.js';
 import accept_decline_connection_service from '../services/connections/accept_decline_connection_service.js';
 import remove_connection_service from '../services/connections/remove_connection_service.js';
-import follow_user_service from '../services/connections/follow_service.js';
-import unfollow_user_service from '../services/connections/unfollow_service.js';
+import follow_target_service from '../services/connections/follow_service.js'
+import unfollow_target_service from '../services/connections/unfollow_service.js';
 import get_connections_service from '../services/connections/get_list_of_connections_service.js';
 import get_pending_requests_service from '../services/connections/get_list_of_pending_connections_service.js';
 import blockUser from '../services/connections/block_user_service.js';
@@ -57,22 +57,22 @@ export const remove_connection = async (req, res) => {
     res.status(500).json({ message: 'Error while removing connection', error: error.message });
   }
 };
-export const follow_user = async (req, res) => {
+export const follow_target = async (req, res) => {
   try {
-    const { follower, followed } = req.body;
-    const result = await follow_user_service(follower, followed);
+    const { follower, targetId, targetType } = req.body; // targetType should be 'user' or 'company'
+    const result = await follow_target_service(follower, targetId, targetType);
     res.status(200).json(result);
   } catch (error) {
-    res.status(500).json({ message: 'Error while following user', error: error.message });
+    res.status(500).json({ message: 'Error while following', error: error.message });
   }
 };
-export const unfollow_user = async (req, res) => {
+export const unfollow_target = async (req, res) => {
   try {
-    const { follower, followed } = req.body;
-    const result = await unfollow_user_service(follower, followed);
+    const { follower, targetId, targetType } = req.body;
+    const result = await unfollow_target_service(follower, targetId, targetType);
     res.status(200).json(result);
   } catch (error) {
-    res.status(500).json({ message: 'Error while unfollowing user', error: error.message });
+    res.status(500).json({ message: 'Error while unfollowing target', error: error.message });
   }
 };
 export const get_connections = async (req, res) => {

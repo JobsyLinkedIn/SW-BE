@@ -1,6 +1,8 @@
 import createCompany from "../services/company/create_company_service.js";
 import updateCompany from "../services/company/update_company_service.js";
 import  createJobService  from "../services/company/job_posting_service.js";
+import getCompanyJobAnalytics from "../services/company/get_analytics_service.js";
+import getCompanyJobApplications from "../services/company/get_application_service.js";
 export const createCompanyController = async (req, res) => {
   try {
     const companyData = req.body;
@@ -52,3 +54,20 @@ export const createJobController = async (req, res) => {
   }
 };
 
+export const fetchJobApplications = async (req, res) => {
+  try {
+    const apps = await getCompanyJobApplications(req.params.companyId);
+    res.status(200).json(apps);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+export const fetchJobAnalytics = async (req, res) => {
+  try {
+    const data = await getCompanyJobAnalytics(req.params.companyId);
+    res.status(200).json(data);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
