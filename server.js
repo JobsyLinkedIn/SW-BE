@@ -14,6 +14,7 @@ import NotificationRoutes from './routes/notification.js';
 import http from 'http';
 import { Server as SocketIOServer } from 'socket.io';
 import companyRoutes from './routes/company.js';
+import jobRoutes from './routes/job.js'; // Import job routes
 
 const app = express();
 const PORT = process.env.PORT || 3000;
