@@ -77,7 +77,7 @@ export const unfollow_user = async (req, res) => {
 };
 export const get_connections = async (req, res) => {
   try {
-    const { email } = req.query;
+    const { email } = req.body;
     const result = await get_connections_service(email);
     res.status(200).json(result);
   } catch (error) {
@@ -86,7 +86,7 @@ export const get_connections = async (req, res) => {
 };
 export const get_pending_requests = async (req, res) => {
   try {
-    const { email } = req.query;
+    const { email } = req.body;
     const result = await get_pending_requests_service(email);
     res.status(200).json(result);
   } catch (error) {

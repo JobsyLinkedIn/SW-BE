@@ -13,6 +13,7 @@ import swaggerDocument from './swagger_output.json' with { type: 'json' };
 import NotificationRoutes from './routes/notification.js';
 import http from 'http';
 import { Server as SocketIOServer } from 'socket.io';
+import companyRoutes from './routes/company.js';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -54,7 +55,7 @@ app.use('/api/posts', postRoutes); //Posts Routes
 app.use('/api/user/actions', userActionsRoutes); //User Actions Route
 app.use('/api/users', connectionRoutes);
 app.use('/api/notifications', NotificationRoutes); //Notifications Route
-
+app.use('/api',companyRoutes);
 
 
 // 🔴 Place this at the end (AFTER routes)
