@@ -31,7 +31,7 @@ pipeline {
             steps {
                 script {
                     // Run tests only if defined, else continue
-                    sh 'docker-compose run backend npm run test || echo "No tests defined"'
+                    sh 'docker-compose run --rm backend npm run test || echo "No tests defined"'
                 }
             }
         }
