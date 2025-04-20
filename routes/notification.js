@@ -1,16 +1,17 @@
 import express from 'express';
 import * as notificationsController from '../controllers/notificationsController.js';
+import authenticateUser from '../middlewares/authenticateUser.js';
 
 const router = express.Router();
 
-router.post('/createnotification', notificationsController.createNotification);
 
-router.get('/:userId', notificationsController.getUserNotifications);
+router.post('/createnotification', authenticateUser, notificationsController.createNotification);
 
-
-router.patch('/:id/read', notificationsController.markAsRead);
+router.get('/:userId',authenticateUser,notificationsController.getUserNotifications);
 
 
-router.get('/:userId/unseen-count', notificationsController.getUnseenCount);
+router.patch('/:id/read',authenticateUser, notificationsController.markAsRead);
+
+router.get('/:userId/unseen-count',authenticateUser,notificationsController.getUnseenCount);
 
 export default router;

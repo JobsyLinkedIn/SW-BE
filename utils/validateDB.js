@@ -21,9 +21,6 @@ async function validateDocumentsExistence(model, docIds) {
  * @returns {boolean} - Returns true if all IDs are valid ObjectIds, otherwise false.
  */
 function areValidObjectIds(ids) {
-  if (!Array.isArray(ids) || ids.length === 0) {
-    return false;
-  }
   if (ids.length === 0) {
     return true;
   }

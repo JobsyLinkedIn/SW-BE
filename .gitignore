@@ -7,3 +7,5 @@ Module2.yaml
 upload_cache/*
 !/upload_cache/.gitkeep
 .env
+
+.env

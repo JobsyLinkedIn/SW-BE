@@ -10,13 +10,16 @@ cloudinary.config({
 
 const cloudinaryUploadFiles = async (req, res, next) => {
   try {
+    let mediaFiles = []; //Array to store Upladed files
     // Handle both single and multiple file uploads
-    const mediaFiles = req.file ? [req.file] : req.files;
-    if (!mediaFiles || mediaFiles.length === 0) {
-      return next(new Error('No file uploaded'));
+    if (req.files) {
+      mediaFiles = req.files;
+    } else if (req.file) {
+      mediaFiles = [req.file];
+    } else {
+      return next();
     }
-
-    const mediaFilesData = []; // Array to store Cloudinary upload results
+    let mediaFilesData = []; // Array to store Cloudinary upload results
 
     for (const file of mediaFiles) {
       // Determine the resource type based on the file's mimetype
@@ -40,7 +43,7 @@ const cloudinaryUploadFiles = async (req, res, next) => {
 
     // Attach the uploaded file data to the request object
     req.mediaFilesData = mediaFilesData;
-    next();
+    return next();
   } catch (error) {
     console.error('Error in cloudinaryUploadFiles:', error);
     next(error);

@@ -7,7 +7,9 @@ const companySchema = new mongoose.Schema({
   logo: String,
   followers: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
   description: String,
-  //   jobPostings: [{ type: mongoose.Schema.Types.ObjectId, ref: "Job" }],
+  createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  createdAt: { type: Date, default: Date.now },
+  jobPostings: [{ type: mongoose.Schema.Types.ObjectId, ref: "Job" }],
 });
 
 const Company = mongoose.model('Company', companySchema, 'Company');
