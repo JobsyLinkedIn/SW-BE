@@ -129,7 +129,7 @@ const loginUser = async ({ email, password }) => {
   if (!isMatch) throw new Error('Login failed. Make sure your email and password are correct');
 
   const token = jwt.sign({ userId: user._id, email: user.email }, process.env.JWT_SECRET, {
-    expiresIn: '1h',
+    expiresIn: '1d',
   });
 
   return { msg: 'Logged in successfully', token };
