@@ -1,4 +1,4 @@
-import { createAdmin, loginAdmin } from '../services/adminService.js';
+import { createAdmin, loginAdmin } from '../services/adminServices.js';
 
 export const registerAdmin = async (req, res) => {
   try {
@@ -15,19 +15,14 @@ export const registerAdmin = async (req, res) => {
   }
 };
 
-export const loginAdmin = async (req, res) => {
+export const adminLogin = async (req, res) => {
   try {
     const { email, password } = req.body;
     const { msg, token, admin } = await loginAdmin({ email, password });
 
     res.status(200).json({
       message: msg,
-      token,
-      admin: {
-        id: admin._id,
-        name: admin.name,
-        email: admin.email,
-      },
+      token
     });
   } catch (err) {
     res.status(400).json({ message: err.message });

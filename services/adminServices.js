@@ -1,7 +1,7 @@
 // adminService.js
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import Admin from '../models/admin'; 
+import Admin from '../models/admin.js'; 
 
 const JWT_SECRET = process.env.ADMIN_JWT_SECRET;
 
@@ -16,7 +16,7 @@ export const loginAdmin = async ({ email, password }) => {
   if (!isMatch) throw new Error('Login failed. Make sure your email and password are correct');
 
 
-  const token = jwt.sign({ adminId: admin._id, email: admin.email }, JWT_SECRET, {
+  const token = jwt.sign({ adminId: admin._id, email: admin.email}, JWT_SECRET, {
     expiresIn: '7d',
   });
 

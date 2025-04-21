@@ -16,6 +16,7 @@ import { Server as SocketIOServer } from 'socket.io';
 import companyRoutes from './routes/company.js';
 import privacyRoutes from './routes/privacy.js';
 import adminRoutes from './routes/admin.js';
+import reportRoutes from './routes/report.js';
 const app = express();
 const PORT = process.env.PORT || 3000;
 const server = http.createServer(app); 
@@ -58,7 +59,9 @@ app.use('/api/users', connectionRoutes);
 app.use('/api/notifications', NotificationRoutes); //Notifications Route
 app.use('/api',companyRoutes);
 app.use('/api/privacy',privacyRoutes);
-app.use('api/admin',adminRoutes); // Connection routes
+app.use('/api/admin',adminRoutes); // Connection routes
+app.use('/api/report', reportRoutes); // Report routes
+
 
 
 // 🔴 Place this at the end (AFTER routes)
