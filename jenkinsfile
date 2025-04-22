@@ -2,14 +2,14 @@ pipeline {
     agent any
 
     environment {
-        IMAGE_NAME     = 'backend'
-        REGISTRY       = 'docker.io'
-        DOCKER_IMAGE   = "${REGISTRY}/${IMAGE_NAME}:latest"
-        AZURE_SSH_KEY  = '/var/jenkins_home/.ssh/JOBSY-UBUNTU.pem'
-        AZURE_SERVER_IP= '74.162.41.144'
-        AZURE_USERNAME = 'kassem'
-        REPO_URL       = 'git@github.com:JobsyLinkedIn/SW-BE.git'
-        WORK_DIR       = '/home/kassem/SW-BE'
+        IMAGE_NAME      = 'backend'
+        REGISTRY        = 'docker.io'
+        DOCKER_IMAGE    = "${REGISTRY}/${IMAGE_NAME}:latest"
+        AZURE_SSH_KEY   = '/var/jenkins_home/.ssh/JOBSY-UBUNTU.pem'
+        AZURE_SERVER_IP = '74.162.41.144'
+        AZURE_USERNAME  = 'kassem'
+        REPO_URL        = 'git@github.com:JobsyLinkedIn/SW-BE.git'
+        WORK_DIR        = '/home/kassem/SW-BE'
     }
 
     stages {
@@ -21,12 +21,13 @@ pipeline {
 
         stage('Prepare .env') {
             steps {
-                // this will copy the env-file-jobsy credential into your workspace as ".env"
-                withCredentials([file(credentialsId: 'env-file-jobsy', variable: 'ENV_FILE')]) {
-                    sh '''
-                        echo "Writing .env from Jenkins credential..."
-                        cp "${ENV_FILE}" .env
-                        chmod 600 .env
+                // pull your .env text into ENV_CONTENTS
+                withCredentials([string(credentialsId: 'env-vars-jobsy', variable: 'ENV_CONTENTS')]) {
+                    sh '''#!/bin/bash
+                      echo "Writing .env from Jenkins secret..."
+                      # write the multi‑line secret into .env
+                      printf "%s\n" "$ENV_CONTENTS" > .env
+                      chmod 600 .env
                     '''
                 }
             }
@@ -45,20 +46,19 @@ pipeline {
         }
 
         stage('Push Docker Image') {
-            // only on main
             when {
                 expression { env.BRANCH_NAME == 'main' }
             }
             steps {
                 withCredentials([usernamePassword(
-                                  credentialsId: 'docker-hub-credentials',
-                                  usernameVariable: 'DOCKER_USERNAME',
-                                  passwordVariable: 'DOCKER_PASSWORD'
-                                )]) {
-                    sh '''
-                        echo $DOCKER_PASSWORD | docker login -u $DOCKER_USERNAME --password-stdin
-                        docker tag backend ${DOCKER_IMAGE}
-                        docker push ${DOCKER_IMAGE}
+                    credentialsId: 'docker-hub-credentials',
+                    usernameVariable: 'DOCKER_USERNAME',
+                    passwordVariable: 'DOCKER_PASSWORD'
+                )]) {
+                    sh '''#!/bin/bash
+                      echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+                      docker tag backend ${DOCKER_IMAGE}
+                      docker push ${DOCKER_IMAGE}
                     '''
                 }
             }
@@ -66,15 +66,18 @@ pipeline {
 
         stage('Deploy to Azure') {
             steps {
-                sh """
-                    ssh -i ${AZURE_SSH_KEY} ${AZURE_USERNAME}@${AZURE_SERVER_IP} \\
-                    'if [ -d "${WORK_DIR}" ]; then
-                         cd "${WORK_DIR}" && git pull origin main && docker-compose down && \\
-                         docker ps -aq -f name=mongo | xargs -r docker rm -f && \\
-                         docker-compose up -d
-                     else
-                         git clone ${REPO_URL} ${WORK_DIR} && cd ${WORK_DIR} && docker-compose up -d
-                     fi'
+                sh """#!/bin/bash
+                  ssh -i ${AZURE_SSH_KEY} ${AZURE_USERNAME}@${AZURE_SERVER_IP} '
+                    if [ -d "${WORK_DIR}" ]; then
+                      echo "Directory exists, pulling latest changes"
+                      cd "${WORK_DIR}" && git pull origin main && docker-compose down && \
+                      docker ps -aq -f name=mongo | xargs -r docker rm -f && \
+                      docker-compose up -d
+                    else
+                      echo "Cloning repository"
+                      git clone ${REPO_URL} ${WORK_DIR} && cd ${WORK_DIR} && docker-compose up -d
+                    fi
+                  '
                 """
             }
         }
