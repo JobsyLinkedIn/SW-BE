@@ -15,6 +15,7 @@ const seedUsers = async () => {
       companyMap[company.name] = company._id;
     });
 
+
     const users = [
       {
         name: 'john',
@@ -24,7 +25,6 @@ const seedUsers = async () => {
         coverPicture: 'http://example.com/cover.jpg',
         profilePicture: 'http://example.com/profile.jpg',
         resume: 'http://example.com/resume.pdf',
-        subscriptionPlan: 'Premium',
         connectionPrivacy: 'no-one',
         createdAt: new Date(),
         updatedAt: new Date(),
@@ -38,7 +38,6 @@ const seedUsers = async () => {
         coverPicture: 'http://example.com/cover2.jpg',
         profilePicture: 'http://example.com/profile2.jpg',
         resume: 'http://example.com/resume2.pdf',
-        subscriptionPlan: 'Free',
         createdAt: new Date(),
         updatedAt: new Date(),
         company: companyMap['Marketing Pro'],

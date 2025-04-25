@@ -11,9 +11,20 @@ const userSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now },
   subscriptionPlan: {
-    type: String,
-    enum: ['Free', 'Premium'],
-    default: 'Free',
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Plan',
+  },
+  hasSelectedPlan: {
+    type: Boolean,
+    default: false,
+  },
+  subscriptionStart: {
+    type: Date,
+    default: null,
+  },
+  subscriptionEnd: {
+    type: Date,
+    default: null,
   },
   company: {
     type: mongoose.Schema.Types.ObjectId,

@@ -5,6 +5,7 @@ import seedCompanies from './seeds/company.js';
 import seedPosts from './seeds/post.js';
 import seedComments from './seeds/comment.js';
 import seedCompaniesFollowers from './seeds/companyFollowers.js';
+import seedSubscriptionPlans from './seeds/subscriptionPlan.js';
 const MONGO_URI = process.env.MONGO_URI;
 
 const seedAll = async () => {
@@ -18,6 +19,7 @@ const seedAll = async () => {
       console.log('Connected to MongoDB');
     }
     await seedCompanies();
+    await seedSubscriptionPlans();
     await seedUsers();
     await seedCompaniesFollowers();
     await seedPosts();
