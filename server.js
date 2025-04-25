@@ -17,6 +17,7 @@ import companyRoutes from './routes/company.js';
 import privacyRoutes from './routes/privacy.js';
 import adminRoutes from './routes/admin.js';
 import reportRoutes from './routes/report.js';
+import jobroutes from './routes/jobRoutes.js';
 const app = express();
 const PORT = process.env.PORT || 3000;
 const server = http.createServer(app); 
@@ -61,6 +62,7 @@ app.use('/api',companyRoutes);
 app.use('/api/privacy',privacyRoutes);
 app.use('/api/admin',adminRoutes); // Connection routes
 app.use('/api/report', reportRoutes); // Report routes
+app.use('/api/jobs', jobroutes); // Job routes
 
 
 
