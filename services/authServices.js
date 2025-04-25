@@ -49,6 +49,10 @@ const verifyCaptcha = async (captchaToken) => {
 };
 
 const registerUser = async ({ name, email, password }) => {
+  if (!name || !email || !password) {
+    throw new Error('Name, email, and password are required');
+  }
+
   let user = await User.findOne({ email });
   if (user) throw new Error('Email already in use');
 
@@ -56,6 +60,7 @@ const registerUser = async ({ name, email, password }) => {
 
   user = new User({ name, email, password: hashedPassword });
   await user.save();
+
   let userDetails = new UserDetails({
     user: user._id,
     industry: null,
@@ -66,7 +71,7 @@ const registerUser = async ({ name, email, password }) => {
     blockedUsers: [],
   });
   await userDetails.save();
-  
+
   const token = jwt.sign({ email }, process.env.JWT_SECRET, {
     expiresIn: '1h',
   });
@@ -124,7 +129,7 @@ const loginUser = async ({ email, password }) => {
   if (!isMatch) throw new Error('Login failed. Make sure your email and password are correct');
 
   const token = jwt.sign({ userId: user._id, email: user.email }, process.env.JWT_SECRET, {
-    expiresIn: '1h',
+    expiresIn: '1d',
   });
 
   return { msg: 'Logged in successfully', token };

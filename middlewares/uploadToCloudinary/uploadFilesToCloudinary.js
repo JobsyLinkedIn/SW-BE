@@ -1,11 +1,7 @@
-import express from 'express';
-import multer from 'multer';
 import cloudinary from 'cloudinary';
-import asyncHandler from 'express-async-handler';
 import fs from 'fs';
 
-//configure cloudinary
-
+// Configure Cloudinary
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
   api_key: process.env.CLOUDINARY_CLOUD_API_KEY,
@@ -14,31 +10,42 @@ cloudinary.config({
 
 const cloudinaryUploadFiles = async (req, res, next) => {
   try {
-    if (!req.files) {
+    let mediaFiles = []; //Array to store Upladed files
+    // Handle both single and multiple file uploads
+    if (req.files) {
+      mediaFiles = req.files;
+    } else if (req.file) {
+      mediaFiles = [req.file];
+    } else {
       return next();
     }
-    let mediaFiles = req.files;
-    let mediaFilesData = []; //public_id and secure_url
+    let mediaFilesData = []; // Array to store Cloudinary upload results
 
     for (const file of mediaFiles) {
-      // Determine the correct resource type based on mimetype
+      // Determine the resource type based on the file's mimetype
       let resourceType = 'image';
       if (file.mimetype.startsWith('video/')) {
         resourceType = 'video';
       } else if (file.mimetype.startsWith('application/')) {
-        resourceType = 'raw'; // for PDFs or other files
+        resourceType = 'raw'; // For PDFs or other files
       }
-      let result = await cloudinary.uploader.upload(file.path, {
+
+      // Upload the file to Cloudinary
+      const result = await cloudinary.uploader.upload(file.path, {
         resource_type: resourceType,
       });
+
       mediaFilesData.push(result);
-      //Remove image from storage
+
+      // Remove the file from local storage
       fs.unlinkSync(file.path);
     }
+
+    // Attach the uploaded file data to the request object
     req.mediaFilesData = mediaFilesData;
-    next();
+    return next();
   } catch (error) {
-    console.log(error);
+    console.error('Error in cloudinaryUploadFiles:', error);
     next(error);
   }
 };

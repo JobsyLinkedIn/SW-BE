@@ -80,15 +80,6 @@ const addEducation = async (req, res) => {
   }
 };
 
-const addSkills = async (req, res) => {
-  try {
-    const response = await profileService.addSkills(req, req.body.skills);
-    res.status(200).json(response);
-  } catch (error) {
-    console.error(error);
-    res.status(400).json({ msg: error.message });
-  }
-};
 
 const updatePrivacySettings = async (req, res) => {
   try {
@@ -120,6 +111,57 @@ const followUser = async (req, res) => {
   }
 };
 
+const addSkills = async (req, res) => {
+  try {
+    const response = await profileService.addSkills(req, req.body.skillsData);
+    res.status(200).json(response);
+  } catch (error) {
+    console.error(error);
+    res.status(400).json({ msg: error.message });
+  }
+};
+
+
+const deleteWorkExperience = async (req, res) => {
+  try {
+    const response = await profileService.deleteWorkExperience(req, req.params.id);
+    res.status(200).json(response);
+  } catch (error) {
+    console.error(error);
+    res.status(400).json({ msg: error.message });
+  }
+};
+
+const deleteEducation = async (req, res) => {
+  try {
+    const response = await profileService.deleteEducation(req, req.params.id);
+    res.status(200).json(response);
+  } catch (error) {
+    console.error(error);
+    res.status(400).json({ msg: error.message });
+  }
+};
+
+const deleteSkills = async (req, res) => {
+  try {
+    const response = await profileService.deleteSkills(req, req.body.skillsToDelete);
+    res.status(200).json(response);
+  } catch (error) {
+    console.error(error);
+    res.status(400).json({ msg: error.message });
+  }
+};
+
+const getProfile = async (req, res) => {
+  try {
+    const response = await profileService.getProfile(req);
+    res.status(200).json(response);
+  } catch (error) {
+    console.error(error);
+    res.status(400).json({ message: error.message });
+  }
+};
+
 export {
   createOrUpdateProfile,
   uploadProfilePicture,
@@ -130,7 +172,11 @@ export {
   addWorkExperience,
   addEducation,
   addSkills,
+  deleteWorkExperience, 
+  deleteEducation, 
+  deleteSkills, 
   updatePrivacySettings,
   viewUserProfile,
   followUser,
+  getProfile,
 };
