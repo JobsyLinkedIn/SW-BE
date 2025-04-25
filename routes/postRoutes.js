@@ -16,12 +16,13 @@ import {
 } from '../controllers/postsController.js';
 const router = express.Router();
 import uploadByMulter from '../middlewares/multer/multer.js';
+import authenticateUser from '../middlewares/authenticateUser.js';
 import cloudinaryUploadFiles from '../middlewares/uploadToCloudinary/uploadFilesToCloudinary.js';
 
 // api/posts
 router
   .route('/')
-  .get(getFeedCtrl)
+  .get(authenticateUser, getFeedCtrl)
   .post(uploadByMulter.array('media'), cloudinaryUploadFiles, createPostCtrl);
 //We shoule Use Verify Token MiddleWare First
 

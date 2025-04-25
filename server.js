@@ -8,8 +8,10 @@ import postRoutes from './routes/postRoutes.js'; // Import post routes
 import errorHandler from './middlewares/errorHandler.js';
 import userActionsRoutes from './routes/userActionsRoutes.js';
 import connectionRoutes from './routes/connections.js';
+import subscriptionPlanRoutes from './routes/subscriptionPlanRoutes.js';
 import swaggerUi from 'swagger-ui-express';
 import swaggerDocument from './swagger_output.json' with { type: 'json' };
+import stripePaymentRoutes from './routes/stripePayment/stripePaymentRouter.js';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -26,6 +28,8 @@ app.use('/api/user/profile', profileRoutes); // Profile routes
 app.use('/api/posts', postRoutes); //Posts Routes
 app.use('/api/user/actions', userActionsRoutes); //User Actions Route
 app.use('/api/users', connectionRoutes);
+app.use('/api/subscription-plan', subscriptionPlanRoutes);
+app.use('/api/subscription-plan-payment', stripePaymentRoutes);
 
 // 🔴 Place this at the end (AFTER routes)
 app.use(errorHandler);
