@@ -152,6 +152,16 @@ const deleteSkills = async (req, res) => {
   }
 };
 
+const getProfile = async (req, res) => {
+  try {
+    const response = await profileService.getProfile(req);
+    res.status(200).json(response);
+  } catch (error) {
+    console.error(error);
+    res.status(400).json({ message: error.message });
+  }
+};
+
 export {
   createOrUpdateProfile,
   uploadProfilePicture,
@@ -168,4 +178,5 @@ export {
   updatePrivacySettings,
   viewUserProfile,
   followUser,
+  getProfile,
 };

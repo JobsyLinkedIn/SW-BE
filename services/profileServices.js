@@ -1,5 +1,17 @@
 import Profile from '../models/profileModel.js';
 
+const getProfile = async (req) => {
+  const userId = req.user._id; 
+  const profile = await Profile.findOne({ userId })
+    .populate('followers') 
+    .populate('workExperience') 
+    .populate('education'); 
+
+  if (!profile) throw new Error('Profile not found');
+
+  return {profile};
+};
+
 const createOrUpdateProfile = async (req, profileData) => {
   const { name, bio, location } = profileData;
   const userId = req.user._id; 
@@ -205,4 +217,5 @@ export {
   updatePrivacySettings,
   viewUserProfile,
   followUser,
+  getProfile,
 };
