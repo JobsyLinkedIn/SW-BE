@@ -31,8 +31,15 @@ const userSchema = new mongoose.Schema({
     ref: 'Company',
     default: null,
   },
+  connectionPrivacy: {
+    type: String,
+    enum: ['everyone',  'no-one'],
+    default: 'everyone',
+  },
   connections: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User', default: [] }],
   pendingRequests: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User', default: [] }],
+  appliedJobs: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Job' }],
+  savedJobs: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Job' }],
 });
 
 const User = mongoose.model('User', userSchema, 'User');

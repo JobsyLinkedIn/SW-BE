@@ -8,6 +8,16 @@ const userDetailsSchema = new mongoose.Schema({
   skills: [String],
   savedPosts: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Post' }],
   blockedUsers: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+  reportedBy: [
+    {
+      reporterId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+      reason: {
+        type: String,
+        enum: ['spam', 'harassment', 'inappropriate content', 'fake-account', 'other'],
+        required: true,
+      },      reportedAt: { type: Date, default: Date.now },
+    },
+  ],
 });
 
 const UserDetails = mongoose.model('UserDetails', userDetailsSchema, 'UserDetails');

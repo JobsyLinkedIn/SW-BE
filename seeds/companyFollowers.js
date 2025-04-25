@@ -2,28 +2,29 @@ import User from '../models/user.js';
 import Company from '../models/company.js';
 
 const seedCompaniesFollowers = async () => {
-  try {
-    const users = await User.find();
-    const companies = await Company.find();
-
-    if (users.length > 0 && companies.length > 0) {
-      for (const company of companies) {
-        const randomFollowers = users
-          .sort(() => 0.5 - Math.random()) // Shuffle users
-          .slice(0, Math.floor(Math.random() * 3) + 1)
-          .map((user) => user._id); // Extract user IDs
-
-        // Update the company with these followers
-        company.followers = randomFollowers;
-        await company.save();
+    try {
+      const companies = await Company.find();
+      const users = await User.find();
+  
+      if (companies.length === 0 || users.length === 0) {
+        console.log('Cannot seed followers: missing users or companies.');
+        return;
       }
-      console.log('Followers successfully added to companies.');
-    } else {
-      console.log('No users or companies found.');
+  
+      for (const company of companies) {
+        // Choose first 3 users as followers
+        const selectedUsers = users.slice(0, 3).map(user => user._id);
+  
+        // Ensure no duplicates
+        const uniqueFollowers = new Set([...company.followers, ...selectedUsers]);
+        company.followers = Array.from(uniqueFollowers);
+  
+        await company.save(); // Update existing company only
+      }
+  
+      console.log('Company followers seeded!');
+    } catch (err) {
+      console.error('Error seeding followers:', err);
     }
-  } catch (error) {
-    console.error('Error seeding followers:', error);
-  }
-};
-
+  };
 export default seedCompaniesFollowers;

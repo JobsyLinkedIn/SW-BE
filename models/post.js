@@ -59,6 +59,13 @@ const PostSchema = new mongoose.Schema(
         ref: 'Comment',
       },
     ],
+    reportedBy: [
+      {
+        reporterId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+        enum: ['spam', 'harassment', 'inappropriate content', 'fake-account', 'other'],
+        reportedAt: { type: Date, default: Date.now },
+      },
+    ],
     shares: [
       {
         type: mongoose.Schema.Types.ObjectId,
@@ -154,4 +161,4 @@ const validateEditPost = (data) => {
 
   return schema.validate(data);
 };
-export { postModel, validateCreatePost, validateEditPost };
+export  { postModel, validateCreatePost, validateEditPost };

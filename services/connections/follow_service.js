@@ -1,32 +1,47 @@
 import UserDetails from '../../models/user_details.js';
 import User from '../../models/user.js';
+import Company from '../../models/company.js';
 
-export const follow_user_service = async (followerEmail, followedEmail) => {
+const follow_target_service = async (followerEmail, targetId, targetType) => {
   try {
     const follower = await User.findOne({ email: followerEmail });
-    const followed = await User.findOne({ email: followedEmail });
-
-    if (!follower || !followed) {
-      throw new Error('One or both users not found');
+    if (!follower) {
+      throw new Error('Follower user not found');
     }
 
-    // Fetch UserDetails of the followed user
-    let followedDetails = await UserDetails.findOne({ user: followed._id });
-    if (!followedDetails) {
-      throw new Error('User details not found for the followed user');
+    if (targetType === 'user') {
+      const followedUser = await User.findById(targetId);
+      if (!followedUser) throw new Error('Target user not found');
+
+      let userDetails = await UserDetails.findOne({ user: followedUser._id });
+      if (!userDetails) throw new Error('UserDetails not found for the target user');
+
+      if (userDetails.followers.includes(follower._id)) {
+        throw new Error('Already following this user');
+      }
+
+      userDetails.followers.push(follower._id);
+      await userDetails.save();
+      return { message: 'User followed successfully' };
+
+    } else if (targetType === 'company') {
+      const company = await Company.findById(targetId);
+      if (!company) throw new Error('Target company not found');
+
+      if (company.followers.includes(follower._id)) {
+        throw new Error('Already following this company');
+      }
+
+      company.followers.push(follower._id);
+      await company.save();
+      return { message: 'Company followed successfully' };
+
+    } else {
+      throw new Error('Invalid target type');
     }
-
-    if (followedDetails.followers.includes(follower._id)) {
-      throw new Error('You are already following this user');
-    }
-
-    followedDetails.followers.push(follower._id);
-    await followedDetails.save();
-
-    return { message: 'User followed successfully' };
   } catch (error) {
     throw new Error(error.message);
   }
 };
 
-export default follow_user_service;
+export default follow_target_service;

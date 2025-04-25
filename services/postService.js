@@ -17,7 +17,7 @@ const createPostService = async ({
   UploadedFiles = [],
 }) => {
   // TODO: Handle Uploaded Media (Implementation Pending)
-
+  /*
   // ✅ Validate Post Data
   const { error } = validateCreatePost({ content, taggedUsersIds, links });
   if (error) {
@@ -25,9 +25,11 @@ const createPostService = async ({
     err.statusCode = 400;
     throw err;
   }
+  */
 
   // ✅ Validate Tagged Users Exist
-  if (!areValidObjectIds(taggedUsersIds) || !validateDocumentsExistence(User, taggedUsersIds)) {
+  const isTaggedUsersExist = await validateDocumentsExistence(User, taggedUsersIds);
+  if (!areValidObjectIds(taggedUsersIds) || !isTaggedUsersExist) {
     const error = new Error('One or more tagged users do not exist');
     error.statusCode = 400;
     throw error;
@@ -420,7 +422,8 @@ const sharePostService = async ({ userId, sharedPostId, content = '', taggedUser
 
   // ✅ Validate Tagged Users Exist
   if (taggedUsersIds.length !== 0) {
-    if (!areValidObjectIds(taggedUsersIds) || !validateDocumentsExistence(User, taggedUsersIds)) {
+    const isTaggedUsersExist = await validateDocumentsExistence(User, taggedUsersIds);
+    if (!areValidObjectIds(taggedUsersIds) || !isTaggedUsersExist) {
       throw { statusCode: 400, message: 'Invalid or non-existent user IDs' };
     }
   }

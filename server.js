@@ -2,7 +2,7 @@ import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
 import connectDB from './db.js';
-import authRoutes from './routes/auth.js'; // Import authentication routes
+import authRoutes from './routes/auth.js';
 import profileRoutes from './routes/profileRoutes.js'; // Import profile routes
 import postRoutes from './routes/postRoutes.js'; // Import post routes
 import errorHandler from './middlewares/errorHandler.js';
@@ -13,8 +13,39 @@ import swaggerUi from 'swagger-ui-express';
 import swaggerDocument from './swagger_output.json' with { type: 'json' };
 import stripePaymentRoutes from './routes/stripePayment/stripePaymentRouter.js';
 
+import NotificationRoutes from './routes/notification.js';
+import http from 'http';
+import { Server as SocketIOServer } from 'socket.io';
+import companyRoutes from './routes/company.js';
+import privacyRoutes from './routes/privacy.js';
+import adminRoutes from './routes/admin.js';
+import reportRoutes from './routes/report.js';
 const app = express();
 const PORT = process.env.PORT || 3000;
+const server = http.createServer(app); 
+const io = new SocketIOServer(server, {
+  cors: {
+    origin: '*', 
+  },
+});
+
+
+app.use((req, res, next) => {
+  req.io = io;
+  next();
+});
+
+io.on('connection', (socket) => {
+  console.log(' A user connected: ' + socket.id);
+
+  socket.on('join', (userId) => {
+    socket.join(userId); 
+  });
+
+  socket.on('disconnect', () => {
+    console.log(' User disconnected: ' + socket.id);
+  });
+});
 
 // Middleware
 app.use(express.json());
@@ -30,6 +61,13 @@ app.use('/api/user/actions', userActionsRoutes); //User Actions Route
 app.use('/api/users', connectionRoutes);
 app.use('/api/subscription-plan', subscriptionPlanRoutes);
 app.use('/api/subscription-plan-payment', stripePaymentRoutes);
+app.use('/api/notifications', NotificationRoutes); //Notifications Route
+app.use('/api',companyRoutes);
+app.use('/api/privacy',privacyRoutes);
+app.use('/api/admin',adminRoutes); // Connection routes
+app.use('/api/report', reportRoutes); // Report routes
+
+
 
 // 🔴 Place this at the end (AFTER routes)
 app.use(errorHandler);
@@ -43,4 +81,4 @@ app.use((err, req, res, next) => {
 */
 // Swagger UI
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
