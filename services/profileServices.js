@@ -14,7 +14,7 @@ const createOrUpdateProfile = async (req, profileData) => {
   }
 
   await profile.save();
-  return { message: 'Profile created or updated successfully'};
+  return { profile, message: 'Profile created/updated successfully' };
 };
 
 const uploadProfilePicture = async (req) => {
