@@ -4,10 +4,15 @@ import  createJobService  from "../services/company/job_posting_service.js";
 import getCompanyJobAnalytics from "../services/company/get_analytics_service.js";
 import getCompanyJobApplications from "../services/company/get_application_service.js";
 import remove_follower_service from "../services/company/remove_follower_service.js";
+import { createPostService } from "../services/postService.js";
+import getCompanyByIdService from '../services/company/get_id_service.js';
+import getCompanyJobsService from '../services/company/get_jobs_service.js';
+import getCompanyFollowersCountService from '../services/company/get_followers_service.js';
+
 export const createCompanyController = async (req, res) => {
   try {
     const companyData = req.body;
-    const createdCompany = await createCompany(companyData, req.user._id); // Passing user ID from req.user
+    const createdCompany = await createCompany(companyData, req.user._id); 
     
     res.status(201).json({
       message: 'Company profile created successfully!',
@@ -83,3 +88,58 @@ export const removeFollowerController = async (req, res) => {
     return res.status(400).json({ error: error.message });
   }
 };
+
+export const createCompanyAnnouncement = async (req, res) => {
+  try {
+    const { content, taggedUsersIds = [], links = [] } = req.body;
+    const UploadedFiles = req.mediaFilesData || [];
+    const userId = req.user._id;
+    const post = await createPostService({ userId, content, taggedUsersIds, links, UploadedFiles });
+    res.status(201).json({ message: 'Post created successfully', post });
+
+  } catch (error) {
+    return res.status(500).json({ message: 'Server Error' });
+  }
+};
+
+
+export const getCompanyById = async (req, res) => {
+  try {
+    const { companyId } = req.params;
+    const company = await getCompanyByIdService(companyId);
+
+    if (!company) {
+      return res.status(404).json({ message: 'Company not found' });
+    }
+
+    res.status(200).json(company);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server Error', error: error.message });
+  }
+};
+
+export const getCompanyJobs = async (req, res) => {
+  try {
+    const { companyId } = req.params;
+    const jobs = await getCompanyJobsService(companyId);
+
+    res.status(200).json(jobs);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server Error', error: error.message });
+  }
+};
+
+export const getCompanyFollowersCount = async (req, res) => {
+  try {
+    const { companyId } = req.params;
+
+    const followersCount = await getCompanyFollowersCountService(companyId);
+    res.status(200).json({ followersCount });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Error fetching followers count', error: error.message });
+  }
+};
+
