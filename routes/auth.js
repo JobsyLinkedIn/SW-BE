@@ -1,5 +1,6 @@
 import express from 'express';
 import * as authController from '../controllers/authController.js';
+import authenticateUser from '../middlewares/authenticateUser.js';
 
 const router = express.Router();
 
@@ -14,5 +15,6 @@ router.post('/update-email', authController.updateEmailController);
 router.post('/update-username', authController.updateUsernameController);
 router.delete('/delete-account', authController.deleteAccountController);
 router.post('/google-signin', authController.googleSignInController);
+router.get('/me', authenticateUser, authController.getUser);
 
 export default router;

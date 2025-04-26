@@ -1,7 +1,6 @@
 import {
   createJobService,
   searchJobsService,
-  filterJobsService,
   applyForJobService,
   getApplicationStatusService,
   saveJobForLaterService,
@@ -10,19 +9,19 @@ import {
   contactCandidateService,
 } from '../services/jobServices.js';
 
-export const filterJobs = async (req, res) => {
-  try {
-    const { location, industry, salaryRange, jobType, experienceLevel } = req.query;
-    const filteredJobs = await filterJobsService(
-      { location, industry, salaryRange, jobType, experienceLevel },
-      req.query.page,
-      req.query.limit
-    );
-    res.status(200).json(filteredJobs);
-  } catch (error) {
-    res.status(400).json({ message: error.message });
-  }
-};
+// export const filterJobs = async (req, res) => {
+//   try {
+//     const { location, industry, salaryRange, jobType, experienceLevel } = req.query;
+//     const filteredJobs = await filterJobsService(
+//       { location, industry, salaryRange, jobType, experienceLevel },
+//       req.query.page,
+//       req.query.limit
+//     );
+//     res.status(200).json(filteredJobs);
+//   } catch (error) {
+//     res.status(400).json({ message: error.message });
+//   }
+// };
 
 export const createJob = async (req, res) => {
   try {
