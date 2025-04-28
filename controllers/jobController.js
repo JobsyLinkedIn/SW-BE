@@ -7,26 +7,28 @@ import {
   getSavedJobsService,
   reviewApplicationsService,
   contactCandidateService,
+  getjobId,
+  getAppliedJobsService,
+  filterJobsService,
 } from '../services/jobServices.js';
 
-// export const filterJobs = async (req, res) => {
-//   try {
-//     const { location, industry, salaryRange, jobType, experienceLevel } = req.query;
-//     const filteredJobs = await filterJobsService(
-//       { location, industry, salaryRange, jobType, experienceLevel },
-//       req.query.page,
-//       req.query.limit
-//     );
-//     res.status(200).json(filteredJobs);
-//   } catch (error) {
-//     res.status(400).json({ message: error.message });
-//   }
-// };
+export const filterJobs = async (req, res) => {
+  try {
+    const { location, industry, salaryRange, jobType, experienceLevel, company, page, limit } = req.query;
+    const filteredJobs = await filterJobsService(
+      { location, industry, salaryRange, jobType, experienceLevel, company },
+      page,
+      limit
+    );
+    res.status(200).json(filteredJobs);
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+};
 
 export const createJob = async (req, res) => {
   try {
-    const jobData = { ...req.body, postedBy: req.user._id };
-    const job = await createJobService(jobData);
+    const job = await createJobService(req.body, req.user._id);
     res.status(201).json({ message: 'Job created successfully', job });
   } catch (error) {
     res.status(400).json({ message: error.message });
@@ -75,7 +77,7 @@ export const getSavedJobs = async (req, res) => {
     const savedJobs = await getSavedJobsService(req);
     res.status(200).json(savedJobs);
   } catch (error) {
-    res.status(400).json({ message: error.message });
+    res.status(404).json({ message: error.message });
   }
 };
 
@@ -94,5 +96,24 @@ export const contactCandidate = async (req, res) => {
     res.status(200).json(response);
   } catch (error) {
     res.status(403).json({ message: error.message });
+  }
+};
+
+export const getJobId = async (req, res) => {
+  try {
+    const { jobId } = req.params;
+    const id = await getjobId(jobId); 
+    res.status(200).json({ jobId: id });
+  } catch (error) {
+    res.status(404).json({ message: error.message });
+  }
+};
+export const getAppliedJobs = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const appliedJobs = await getAppliedJobsService(userId);
+    res.status(200).json(appliedJobs);
+  } catch (error) {
+    res.status(404).json({ message: error.message }); 
   }
 };

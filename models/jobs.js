@@ -8,7 +8,7 @@ const jobSchema = new mongoose.Schema({
   industry: { type: String, required: true },
   experienceLevel: { type: String, enum: ['Entry', 'Mid', 'Senior'], required: true }, 
   salary: { type: Number, required: true },
-  company: { type: mongoose.Schema.Types.ObjectId, ref: 'Company', required: true },
+  company: { type: mongoose.Schema.Types.ObjectId, ref: 'Company'},
   postedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   savedBy: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }], 
   applications: [jobApplicationSchema], 
