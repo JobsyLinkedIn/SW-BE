@@ -53,6 +53,6 @@ router.delete('/skills', deleteSkills);
 router.put('/privacy', updatePrivacySettings);
 router.get('/user', viewUserProfile); 
 router.post('/follow', followUser);
-router.post('/profile', getProfile);
+router.get('/profile', getProfile);
 
 export default router;
