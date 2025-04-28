@@ -1,6 +1,8 @@
 import canSendConnectionRequest from '../services/privacy/connection_privacy_service.js'
 import reportPost from '../services/privacy/report_post_service.js';
 import reportUser from '../services/privacy/report_user_service.js';
+import  updateConnectionPrivacy  from '../services/privacy/handling_user_privacy_service.js';
+
 export const sendConnectionRequestController = async (req, res) => {
   try {
     const senderId = req.user._id;
@@ -43,6 +45,28 @@ export const reportPostController = async (req, res) => {
     await reportPost(reporterId, postId, reason);
 
     res.status(200).json({ message: 'Post reported successfully' });
+  } catch (error) {
+    const statusCode = error.statusCode || 500;
+    res.status(statusCode).json({ error: error.message });
+  }
+};
+
+
+
+export const changeConnectionPrivacy = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const { newSetting } = req.body;
+
+    const updatedUser = await updateConnectionPrivacy(userId, newSetting);
+
+    res.status(200).json({
+      message: 'Connection privacy updated successfully',
+      data: {
+        userId: updatedUser._id,
+        connectionPrivacy: updatedUser.connectionPrivacy,
+      },
+    });
   } catch (error) {
     const statusCode = error.statusCode || 500;
     res.status(statusCode).json({ error: error.message });

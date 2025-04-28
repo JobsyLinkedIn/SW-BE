@@ -16,14 +16,14 @@ const register = async (req, res) => {
   const { name, email, password, captchaToken } = req.body;
 
    try {
-      if (!captchaToken) {
-         return res.status(400).json({ msg: "CAPTCHA verification failed" });
-       }
+      // if (!captchaToken) {
+      //    return res.status(400).json({ msg: "CAPTCHA verification failed" });
+      //  }
 
-       const isHuman = await authService.verifyCaptcha(captchaToken);
-       if (!isHuman) {
-         return res.status(400).json({ msg: "CAPTCHA verification failed" });
-       }
+      //  const isHuman = await authService.verifyCaptcha(captchaToken);
+      //  if (!isHuman) {
+      //    return res.status(400).json({ msg: "CAPTCHA verification failed" });
+      //  }
 
      const response = await authService.registerUser({ name, email, password });
      res.status(201).json(response);
@@ -139,6 +139,20 @@ const deleteAccountController = async (req, res) => {
     res.status(400).json({ msg: error.message });
   }
 };
+ const getUser = async (req, res) => {
+  try {
+    const user = req.user;
+
+    res.status(200).json({
+      id: user._id,
+      name: user.name,
+      email: user.email,
+      companyId: user.company || null,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
 
 export {
   register,
@@ -152,4 +166,5 @@ export {
   updateUsernameController,
   deleteAccountController,
   googleSignInController,
+  getUser,
 };
