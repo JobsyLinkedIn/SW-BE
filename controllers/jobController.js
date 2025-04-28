@@ -7,9 +7,9 @@ import {
   getSavedJobsService,
   reviewApplicationsService,
   contactCandidateService,
-  getjobId,
   getAppliedJobsService,
   filterJobsService,
+  getJobIdsService,
 } from '../services/jobServices.js';
 
 export const filterJobs = async (req, res) => {
@@ -99,15 +99,6 @@ export const contactCandidate = async (req, res) => {
   }
 };
 
-export const getJobId = async (req, res) => {
-  try {
-    const { jobId } = req.params;
-    const id = await getjobId(jobId); 
-    res.status(200).json({ jobId: id });
-  } catch (error) {
-    res.status(404).json({ message: error.message });
-  }
-};
 export const getAppliedJobs = async (req, res) => {
   try {
     const userId = req.user._id;
@@ -115,5 +106,14 @@ export const getAppliedJobs = async (req, res) => {
     res.status(200).json(appliedJobs);
   } catch (error) {
     res.status(404).json({ message: error.message }); 
+  }
+};
+
+export const getJobIds = async (req, res) => {
+  try {
+    const jobIds = await getJobIdsService();
+    res.status(200).json(jobIds);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
   }
 };

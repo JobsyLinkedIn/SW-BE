@@ -12,8 +12,8 @@ import {
   reviewApplications,
   contactCandidate,
   filterJobs,
-  getJobId,
   getAppliedJobs,
+  getJobIds,
 } from '../controllers/jobController.js';
 
 const router = express.Router();
@@ -33,9 +33,9 @@ router.get('/saved', getSavedJobs);
 router.get('/:jobId/applications', reviewApplications);
 router.post('/:jobId/contact/:candidateId', contactCandidate);
 router.get('/filter', filterJobs); 
-router.get('/:jobId/id', getJobId); 
 router.get('/applied', getAppliedJobs);
 router.get('/filter', filterJobs);
+router.get('/jobs/ids', getJobIds);//getter for job ids for front end usage
 
 
 export default router;

@@ -1,6 +1,7 @@
 import Job from '../models/jobs.js';
 import User from '../models/user.js';
 import Company from '../models/company.js';
+import mongoose from 'mongoose';
 
 export const createJobService = async (jobData, userId) => {
   let company = await Company.findOne({ createdBy: userId });
@@ -13,38 +14,52 @@ export const createJobService = async (jobData, userId) => {
     postedBy: userId,
   });
   await job.save();
+  if (company._id) {
   company.jobPostings.push(job._id);
   await company.save();
-
+  }
   return job;
 };
 
 export const filterJobsService = async (filters, page = 1, limit = 10) => {
   const query = {};
 
-  if (filters.location) query.location = new RegExp(filters.location, 'i');
-  if (filters.industry) query.industry = new RegExp(filters.industry, 'i');
+  // Dynamically add filters to the query if they are provided
+  if (filters.location) {
+    query.location = new RegExp(filters.location, 'i'); // Case-insensitive match
+  }
+
+  if (filters.industry) {
+    query.industry = new RegExp(filters.industry, 'i'); // Case-insensitive match
+  }
+
   if (filters.salaryRange) {
     const [minSalary, maxSalary] = filters.salaryRange.split('-').map(Number);
     query.salary = { $gte: minSalary, $lte: maxSalary };
   }
-  if (filters.jobType) query.jobType = new RegExp(filters.jobType, 'i');
-  if (filters.experienceLevel) query.experienceLevel = filters.experienceLevel;
-  if (filters.companyName) {
-    const company = await Company.findOne({ name: new RegExp(filters.companyName, 'i') });
+
+  if (filters.experienceLevel) {
+    query.experienceLevel = filters.experienceLevel;
+  }
+
+  if (filters.company) {
+    const company = await Company.findOne({ name: new RegExp(filters.company, 'i') });
     if (company) {
       query.company = company._id;
     } else {
+      // If no company matches, return empty results
       return { jobs: [], totalJobs: 0, totalPages: 0 };
     }
   }
 
+  // Fetch jobs based on the dynamically built query
   const jobs = await Job.find(query)
-    .select('-applications') 
-    .populate('company', 'name')
+    .select('-applications') // Exclude applications field
+    .populate('company', 'name') // Populate company name
     .skip((page - 1) * limit)
     .limit(limit);
 
+  // Count total jobs matching the query
   const totalJobs = await Job.countDocuments(query);
 
   return { jobs, totalJobs, totalPages: Math.ceil(totalJobs / limit) };
@@ -69,11 +84,17 @@ export const searchJobsService = async (keyword, location, industry, page = 1, l
 };
 
 
+
 export const applyForJobService = async (req) => {
   const userId = req.user._id;
   const { jobId } = req.params;
 
-  const job = await Job.findById(jobId).select('-applications'); 
+  // Validate jobId
+  if (!mongoose.Types.ObjectId.isValid(jobId)) {
+    throw new Error('Invalid Job ID');
+  }
+
+  const job = await Job.findById(jobId);
   if (!job) throw new Error('Job not found');
 
   const alreadyApplied = job.applications.some(
@@ -82,14 +103,19 @@ export const applyForJobService = async (req) => {
 
   if (alreadyApplied) throw new Error('You have already applied for this job');
 
-  const resume = req.mediaFilesData?.find((file) => file.resource_type === 'raw')?.secure_url;
-  const coverLetter = req.mediaFilesData?.find((file) => file.resource_type === 'image')?.secure_url;
+  if (!req.mediaFilesData || req.mediaFilesData.length < 2) {
+    throw new Error('Resume and cover letter are required');
+  }
+
+  const resume = req.mediaFilesData[0]?.secure_url;
+  const coverLetter = req.mediaFilesData[1]?.secure_url;
 
   if (!resume || !coverLetter) {
     throw new Error('Resume and cover letter are required');
   }
 
-  job.applications.push({ applicant: userId, resume, coverLetter });
+  // Include the `job` field when pushing a new application
+  job.applications.push({ job: job._id, applicant: userId, resume, coverLetter });
   await job.save();
 
   return { message: 'Job application submitted successfully' };
@@ -164,7 +190,7 @@ export const contactCandidateService = async (req) => {
   const { jobId, candidateId } = req.params;
   const { message } = req.body;
 
-  const job = await Job.findById(jobId).select('-applications'); 
+  const job = await Job.findById(jobId)
   if (!job) throw new Error('Job not found');
 
   if (job.postedBy.toString() !== userId) {
@@ -179,11 +205,6 @@ export const contactCandidateService = async (req) => {
   return { message: `Message sent to candidate: ${message}` };
 };
 
-export const getjobId = async (jobId) => {
-  const job = await Job.findById(jobId).select('_id'); 
-  if (!job) throw new Error('Job not found');
-  return job._id;
-};
 
 export const getAppliedJobsService = async (userId) => {
   const user = await User.findById(userId).populate({
@@ -198,4 +219,9 @@ export const getAppliedJobsService = async (userId) => {
   }
 
   return user.appliedJobs; 
+};
+
+export const getJobIdsService = async () => {
+  const jobs = await Job.find({}, '_id title'); // Fetch only job IDs and titles
+  return jobs.map(job => ({ id: job._id, title: job.title }));
 };
