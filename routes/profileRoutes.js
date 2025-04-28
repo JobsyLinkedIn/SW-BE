@@ -51,7 +51,7 @@ router.delete('/education/:id', deleteEducation);
 router.post('/skills', addSkills);
 router.delete('/skills', deleteSkills); 
 router.put('/privacy', updatePrivacySettings);
-router.get('/', viewUserProfile);
+router.get('/user', viewUserProfile); 
 router.post('/follow', followUser);
 router.post('/profile', getProfile);
 

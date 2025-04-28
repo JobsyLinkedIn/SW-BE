@@ -103,7 +103,7 @@ const viewUserProfile = async (req, res) => {
 
 const followUser = async (req, res) => {
   try {
-    const response = await profileService.followUser(req, req.body.targetUserId);
+    const response = await profileService.followUser(req, req.body.targetUserName); // Pass targetUserName
     res.status(200).json(response);
   } catch (error) {
     console.error(error);
