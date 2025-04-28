@@ -29,11 +29,5 @@ const authenticateUser = async (req, res, next) => {
   }
 };
 
-export const authorizeCompany = (req, res, next) => {
-  if (!req.user.company) {
-    return res.status(403).json({ msg: 'Access Denied. Only companies can perform this action.' });
-  }
-  next();
-};
 
 export default authenticateUser;
