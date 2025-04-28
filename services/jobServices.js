@@ -225,3 +225,19 @@ export const getJobIdsService = async () => {
   const jobs = await Job.find({}, '_id title'); // Fetch only job IDs and titles
   return jobs.map(job => ({ id: job._id, title: job.title }));
 };
+
+export const getJobDetailsByIdService = async (jobId) => {
+  if (!mongoose.Types.ObjectId.isValid(jobId)) {
+    throw new Error('Invalid Job ID');
+  }
+
+  const job = await Job.findById(jobId)
+    .select('-applications') // Exclude applications field
+    .populate('company', 'name location industry'); // Populate company details
+
+  if (!job) {
+    throw new Error('Job not found');
+  }
+
+  return job;
+};

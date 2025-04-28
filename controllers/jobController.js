@@ -10,6 +10,7 @@ import {
   getAppliedJobsService,
   filterJobsService,
   getJobIdsService,
+  getJobDetailsByIdService,
 } from '../services/jobServices.js';
 
 export const filterJobs = async (req, res) => {
@@ -115,5 +116,15 @@ export const getJobIds = async (req, res) => {
     res.status(200).json(jobIds);
   } catch (error) {
     res.status(500).json({ error: error.message });
+  }
+};
+
+export const getJobDetailsById = async (req, res) => {
+  try {
+    const { jobId } = req.params;
+    const jobDetails = await getJobDetailsByIdService(jobId);
+    res.status(200).json(jobDetails);
+  } catch (error) {
+    res.status(404).json({ message: error.message });
   }
 };

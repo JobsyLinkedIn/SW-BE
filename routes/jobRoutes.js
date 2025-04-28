@@ -14,6 +14,7 @@ import {
   filterJobs,
   getAppliedJobs,
   getJobIds,
+  getJobDetailsById,
 } from '../controllers/jobController.js';
 
 const router = express.Router();
@@ -36,6 +37,7 @@ router.get('/filter', filterJobs);
 router.get('/applied', getAppliedJobs);
 router.get('/filter', filterJobs);
 router.get('/jobs/ids', getJobIds);//getter for job ids for front end usage
+router.get('/:jobId/details', getJobDetailsById); 
 
 
 export default router;
