@@ -24,6 +24,8 @@ const seedAll = async () => {
     await seedCompaniesFollowers();
     await seedPosts();
     await seedComments();
+    await seedJobs();
+    await seedJobApplications();
 
     console.log('All entities seeded successfully!');
   } catch (err) {
