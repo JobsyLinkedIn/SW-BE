@@ -1,4 +1,5 @@
-import  {postModel as Post} from '../../models/post.js';
+import { postModel as Post } from '../../models/post.js';
+import { createReport } from '../reportServices.js'; 
 
 const allowedReasons = ['spam', 'harassment', 'inappropriate content', 'fake-account', 'other'];
 
@@ -33,6 +34,14 @@ const reportPost = async (reporterId, postId, reason) => {
   });
 
   await post.save();
+
+  await createReport({
+    type: 'post',
+    targetId: postId,
+    reason,
+    details: '', 
+    reportedBy: reporterId,
+  });
 };
 
 export default reportPost;

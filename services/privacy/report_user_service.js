@@ -1,5 +1,6 @@
 import User from '../../models/user.js';
 import UserDetails from '../../models/user_details.js';
+import { createReport } from '../reportServices.js'; // adjust path as needed
 
 const allowedReasons = ['spam', 'harassment', 'inappropriate content', 'fake-account', 'other'];
 
@@ -49,6 +50,14 @@ const reportUser = async (reporterId, targetUserId, reason) => {
   });
 
   await targetDetails.save();
+
+  await createReport({
+    type: 'user',
+    targetId: targetUserId,
+    reason,
+    details: '',
+    reportedBy: reporterId,
+  });
 
   return true;
 };
