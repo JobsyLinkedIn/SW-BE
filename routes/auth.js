@@ -5,6 +5,7 @@ import authenticateUser from '../middlewares/authenticateUser.js';
 const router = express.Router();
 
 router.post('/register', authController.register);
+router.post('/registerforcross', authController.registerforcross);
 router.get('/verify-email', authController.verify);
 router.post('/login', authController.login);
 router.get('/resend-confirmation-email', authController.resendConfirmation);
