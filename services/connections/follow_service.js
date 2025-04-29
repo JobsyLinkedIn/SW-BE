@@ -22,7 +22,7 @@ const follow_target_service = async (followerEmail, targetId, targetType) => {
 
       userDetails.followers.push(follower._id);
       await userDetails.save();
-      return { message: 'User followed successfully' };
+      return { message: 'User followed successfully'};
 
     } else if (targetType === 'company') {
       const company = await Company.findById(targetId);

@@ -1,5 +1,5 @@
 
-import MessageRequest from '../../models/messages.js';
+import MessageRequest from '../../models/messagesRequest.js';
 
 const get_message_requests = async (userId) => {
     try {

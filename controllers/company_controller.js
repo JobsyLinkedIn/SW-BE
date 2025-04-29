@@ -8,6 +8,8 @@ import { createPostService } from "../services/postService.js";
 import getCompanyByIdService from '../services/company/get_id_service.js';
 import getCompanyJobsService from '../services/company/get_jobs_service.js';
 import getCompanyFollowersCountService from '../services/company/get_followers_service.js';
+import { getCompanyFollowersService } from '../services/company/get_attributes_follower_service.js'; 
+import checkIfUserFollowsCompany from "../services/company/check_if_following_service.js";
 
 export const createCompanyController = async (req, res) => {
   try {
@@ -48,9 +50,11 @@ export const createJobController = async (req, res) => {
       title: req.body.title,
       description: req.body.description,
       location: req.body.location,
+      industry: req.body.industry,
+      experienceLevel: req.body.experienceLevel,
       salary: req.body.salary,
-      company: req.body.companyId, 
-      postedBy: req._id, 
+      company: req.body.company,
+      postedBy: req.user._id,
     };
 
     const newJob = await createJobService(jobData);
@@ -140,6 +144,37 @@ export const getCompanyFollowersCount = async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Error fetching followers count', error: error.message });
+  }
+};
+
+export const getCompanyFollowers = async (req, res) => {
+  try {
+    const { companyId } = req.params;
+    
+    // Call the service to fetch followers
+    const followers = await getCompanyFollowersService(companyId);
+    
+    return res.status(200).json(followers);
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: error.message || 'Internal server error' });
+  }
+};
+
+
+export const isUserFollowingCompany = async (req, res) => {
+  const { companyId } = req.params;
+  const userId = req.user.id;
+
+  try {
+    const isFollowing = await checkIfUserFollowsCompany(companyId, userId);
+    return res.status(200).json({ isFollowing });
+  } catch (error) {
+    if (error.message === 'CompanyNotFound') {
+      return res.status(404).json({ message: 'Company not found' });
+    }
+    console.error('Error in isUserFollowingCompany:', error);
+    return res.status(500).json({ message: 'Internal server error' });
   }
 };
 

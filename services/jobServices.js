@@ -2,6 +2,7 @@ import Job from '../models/jobs.js';
 import User from '../models/user.js';
 import Company from '../models/company.js';
 import mongoose from 'mongoose';
+import Report from '../models/report.js';
 
 export const createJobService = async (jobData, userId) => {
   let company = await Company.findOne({ createdBy: userId });
@@ -73,10 +74,10 @@ export const searchJobsService = async (keyword, location, industry, page = 1, l
   if (industry) query.industry = new RegExp(industry, 'i');
 
   const jobs = await Job.find(query)
-    .select('-applications') 
-    .populate('company', 'name')
-    .skip((page - 1) * limit)
-    .limit(limit);
+  .select('_id title location company') 
+  .populate('company', 'name')
+  .skip((page - 1) * limit)
+  .limit(limit);
 
   const totalJobs = await Job.countDocuments(query);
 
@@ -232,12 +233,34 @@ export const getJobDetailsByIdService = async (jobId) => {
   }
 
   const job = await Job.findById(jobId)
-    .select('-applications') // Exclude applications field
-    .populate('company', 'name location industry'); // Populate company details
+    .select('_id title description location company') // Include jobId (_id) in the response
+    .populate('company', 'name location industry');
 
   if (!job) {
     throw new Error('Job not found');
   }
 
   return job;
+};
+
+
+export const reportJobService = async (userId, jobId, reason, details) => {
+  if (!mongoose.Types.ObjectId.isValid(jobId)) {
+    throw new Error('Invalid Job ID');
+  }
+  const job = await Job.findById(jobId);
+  if (!job) {
+    throw new Error('Job not found');
+  }
+  const report = new Report({
+    type: 'job',
+    targetId: jobId,
+    reason,
+    details,
+    reportedBy: userId,
+  });
+
+  await report.save();
+
+  return { message: 'Job reported successfully' };
 };

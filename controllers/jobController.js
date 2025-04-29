@@ -11,6 +11,7 @@ import {
   filterJobsService,
   getJobIdsService,
   getJobDetailsByIdService,
+  reportJobService,
 } from '../services/jobServices.js';
 
 export const filterJobs = async (req, res) => {
@@ -126,5 +127,18 @@ export const getJobDetailsById = async (req, res) => {
     res.status(200).json(jobDetails);
   } catch (error) {
     res.status(404).json({ message: error.message });
+  }
+};
+
+export const reportJob = async (req, res) => {
+  try {
+    const userId = req.user._id; // Get the user ID from the authenticated request
+    const { jobId } = req.params; // Get the job ID from the request parameters
+    const { reason, details } = req.body; // Get the reason and details from the request body
+
+    const response = await reportJobService(userId, jobId, reason, details);
+    res.status(201).json(response);
+  } catch (error) {
+    res.status(400).json({ message: error.message });
   }
 };
