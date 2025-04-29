@@ -12,5 +12,5 @@ const messageSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now },
 });
 
-const MessageRequest = mongoose.model('Message', messageSchema, 'Message');
+const MessageRequest = mongoose.model('Messages', messageSchema, 'Message');
 export default MessageRequest;
