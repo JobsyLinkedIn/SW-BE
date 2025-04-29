@@ -51,7 +51,7 @@ export const createJobController = async (req, res) => {
       industry: req.body.industry,
       experienceLevel: req.body.experienceLevel,
       salary: req.body.salary,
-      company: req.body.companyId,
+      company: req.body.company,
       postedBy: req.user._id,
     };
 
