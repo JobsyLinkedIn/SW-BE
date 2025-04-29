@@ -18,5 +18,7 @@ router.get('/company/:companyId', authenticateUser, company_controller.getCompan
 router.get('/company/:companyId/jobs', authenticateUser, company_controller.getCompanyJobs);
 // router.get('/company/:companyId/followers-count', company_controller.getCompanyFollowersCount);
 router.get('/company/:companyId/followers', authenticateUser,authorizeCompanyUser ,company_controller.getCompanyFollowers);
+router.get('/company/:companyId/is-following', authenticateUser, company_controller.isUserFollowingCompany);
+
 
 export default router;
