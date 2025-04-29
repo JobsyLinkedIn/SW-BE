@@ -6,6 +6,8 @@ import seedPosts from './seeds/post.js';
 import seedComments from './seeds/comment.js';
 import seedCompaniesFollowers from './seeds/companyFollowers.js';
 import seedSubscriptionPlans from './seeds/subscriptionPlan.js';
+import seedJobs from './seeds/job.js';
+import seedJobApplications from './seeds/jobapplications.js';
 const MONGO_URI = process.env.MONGO_URI;
 
 const seedAll = async () => {
