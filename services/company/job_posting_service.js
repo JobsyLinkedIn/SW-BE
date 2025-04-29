@@ -5,4 +5,3 @@ const createJobService = async (jobData) => {
   return await newJob.save();
 };
 export default createJobService;
-

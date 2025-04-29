@@ -48,9 +48,11 @@ export const createJobController = async (req, res) => {
       title: req.body.title,
       description: req.body.description,
       location: req.body.location,
+      industry: req.body.industry,
+      experienceLevel: req.body.experienceLevel,
       salary: req.body.salary,
-      company: req.body.companyId, 
-      postedBy: req._id, 
+      company: req.body.companyId,
+      postedBy: req._id,
     };
 
     const newJob = await createJobService(jobData);
