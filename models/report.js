@@ -4,7 +4,7 @@ const reportSchema = new mongoose.Schema(
   {
     type: {
       type: String,
-      enum: ['post', 'comment', 'user', 'job'], 
+      enum: ['post','user','job'], 
       required: true,
     },
     targetId: {
@@ -27,7 +27,7 @@ const reportSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ['pending', 'reviewed', 'ignored', 'resolved'],
+      enum: ['pending', 'approved', 'ignored'],
       default: 'pending',
     },
     actionTaken: {

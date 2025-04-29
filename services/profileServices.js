@@ -141,16 +141,17 @@ const updatePrivacySettings = async (req, privacySettings) => {
 };
 
 const viewUserProfile = async (req) => {
-  const userId = req.user._id; 
-  const profile = await Profile.findOne({ userId }).populate('followers');
+  const { name } = req.query; // Retrieve the username from query parameters
+
+  const profile = await Profile.findOne({ name }).populate('followers');
   if (!profile) throw new Error('Profile not found');
 
-  return { message: 'User profile retrieved successfully' };
+  return { profile, message: 'User profile retrieved successfully' };
 };
 
-const followUser = async (req, targetUserId) => {
+const followUser = async (req, targetUserName) => {
   const userId = req.user._id; 
-  const targetProfile = await Profile.findOne({ userId: targetUserId });
+  const targetProfile = await Profile.findOne({ name: targetUserName }); // Find target user by name
   if (!targetProfile) throw new Error('Target user not found');
 
   if (!targetProfile.followers.includes(userId)) {

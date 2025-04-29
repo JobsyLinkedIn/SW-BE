@@ -1,4 +1,4 @@
-import { createAdmin, loginAdmin } from '../services/adminServices.js';
+import { createAdmin, loginAdmin,getUsersThisMonth,getPostsToday } from '../services/adminServices.js';
 
 export const registerAdmin = async (req, res) => {
   try {
@@ -26,5 +26,25 @@ export const adminLogin = async (req, res) => {
     });
   } catch (err) {
     res.status(400).json({ message: err.message });
+  }
+};
+
+export const getPlatformAnalytics = async (req, res) => {
+  try {
+
+    const usersThisMonth = await getUsersThisMonth();
+
+
+    const postsToday = await getPostsToday();
+
+    res.json({
+      message: 'Platform analytics retrieved successfully.',
+      data: {
+        usersThisMonth,
+        postsToday,
+      },
+    });
+  } catch (error) {
+    res.status(500).json({ message: 'Error retrieving platform analytics.', error: error.message });
   }
 };

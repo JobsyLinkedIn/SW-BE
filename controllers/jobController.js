@@ -1,22 +1,26 @@
 import {
   createJobService,
   searchJobsService,
-  filterJobsService,
   applyForJobService,
   getApplicationStatusService,
   saveJobForLaterService,
   getSavedJobsService,
   reviewApplicationsService,
   contactCandidateService,
+  getAppliedJobsService,
+  filterJobsService,
+  getJobIdsService,
+  getJobDetailsByIdService,
+  reportJobService,
 } from '../services/jobServices.js';
 
 export const filterJobs = async (req, res) => {
   try {
-    const { location, industry, salaryRange, jobType, experienceLevel } = req.query;
+    const { location, industry, salaryRange, jobType, experienceLevel, company, page, limit } = req.query;
     const filteredJobs = await filterJobsService(
-      { location, industry, salaryRange, jobType, experienceLevel },
-      req.query.page,
-      req.query.limit
+      { location, industry, salaryRange, jobType, experienceLevel, company },
+      page,
+      limit
     );
     res.status(200).json(filteredJobs);
   } catch (error) {
@@ -26,8 +30,7 @@ export const filterJobs = async (req, res) => {
 
 export const createJob = async (req, res) => {
   try {
-    const jobData = { ...req.body, postedBy: req.user._id };
-    const job = await createJobService(jobData);
+    const job = await createJobService(req.body, req.user._id);
     res.status(201).json({ message: 'Job created successfully', job });
   } catch (error) {
     res.status(400).json({ message: error.message });
@@ -76,7 +79,7 @@ export const getSavedJobs = async (req, res) => {
     const savedJobs = await getSavedJobsService(req);
     res.status(200).json(savedJobs);
   } catch (error) {
-    res.status(400).json({ message: error.message });
+    res.status(404).json({ message: error.message });
   }
 };
 
@@ -95,5 +98,47 @@ export const contactCandidate = async (req, res) => {
     res.status(200).json(response);
   } catch (error) {
     res.status(403).json({ message: error.message });
+  }
+};
+
+export const getAppliedJobs = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const appliedJobs = await getAppliedJobsService(userId);
+    res.status(200).json(appliedJobs);
+  } catch (error) {
+    res.status(404).json({ message: error.message }); 
+  }
+};
+
+export const getJobIds = async (req, res) => {
+  try {
+    const jobIds = await getJobIdsService();
+    res.status(200).json(jobIds);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+export const getJobDetailsById = async (req, res) => {
+  try {
+    const { jobId } = req.params;
+    const jobDetails = await getJobDetailsByIdService(jobId);
+    res.status(200).json(jobDetails);
+  } catch (error) {
+    res.status(404).json({ message: error.message });
+  }
+};
+
+export const reportJob = async (req, res) => {
+  try {
+    const userId = req.user._id; // Get the user ID from the authenticated request
+    const { jobId } = req.params; // Get the job ID from the request parameters
+    const { reason, details } = req.body; // Get the reason and details from the request body
+
+    const response = await reportJobService(userId, jobId, reason, details);
+    res.status(201).json(response);
+  } catch (error) {
+    res.status(400).json({ message: error.message });
   }
 };

@@ -19,7 +19,7 @@ const seedAll = async () => {
       console.log('Connected to MongoDB');
     }
     await seedCompanies();
-    await seedSubscriptionPlans();
+    // await seedSubscriptionPlans();
     await seedUsers();
     await seedCompaniesFollowers();
     await seedPosts();
