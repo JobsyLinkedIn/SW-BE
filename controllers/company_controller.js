@@ -9,6 +9,7 @@ import getCompanyByIdService from '../services/company/get_id_service.js';
 import getCompanyJobsService from '../services/company/get_jobs_service.js';
 import getCompanyFollowersCountService from '../services/company/get_followers_service.js';
 import { getCompanyFollowersService } from '../services/company/get_attributes_follower_service.js'; 
+import checkIfUserFollowsCompany from "../services/company/check_if_following_service.js";
 
 export const createCompanyController = async (req, res) => {
   try {
@@ -159,3 +160,21 @@ export const getCompanyFollowers = async (req, res) => {
     return res.status(500).json({ message: error.message || 'Internal server error' });
   }
 };
+
+
+export const isUserFollowingCompany = async (req, res) => {
+  const { companyId } = req.params;
+  const userId = req.user.id;
+
+  try {
+    const isFollowing = await checkIfUserFollowsCompany(companyId, userId);
+    return res.status(200).json({ isFollowing });
+  } catch (error) {
+    if (error.message === 'CompanyNotFound') {
+      return res.status(404).json({ message: 'Company not found' });
+    }
+    console.error('Error in isUserFollowingCompany:', error);
+    return res.status(500).json({ message: 'Internal server error' });
+  }
+};
+
