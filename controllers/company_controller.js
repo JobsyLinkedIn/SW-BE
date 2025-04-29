@@ -8,6 +8,7 @@ import { createPostService } from "../services/postService.js";
 import getCompanyByIdService from '../services/company/get_id_service.js';
 import getCompanyJobsService from '../services/company/get_jobs_service.js';
 import getCompanyFollowersCountService from '../services/company/get_followers_service.js';
+import { getCompanyFollowersService } from '../services/company/get_attributes_follower_service.js'; 
 
 export const createCompanyController = async (req, res) => {
   try {
@@ -145,3 +146,16 @@ export const getCompanyFollowersCount = async (req, res) => {
   }
 };
 
+export const getCompanyFollowers = async (req, res) => {
+  try {
+    const { companyId } = req.params;
+    
+    // Call the service to fetch followers
+    const followers = await getCompanyFollowersService(companyId);
+    
+    return res.status(200).json(followers);
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: error.message || 'Internal server error' });
+  }
+};
