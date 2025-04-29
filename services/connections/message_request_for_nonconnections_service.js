@@ -1,4 +1,4 @@
-import MessageRequest from '../../models/messages.js';
+import MessageRequest from '../../models/messagesRequest.js';
 import checkConnection from './check_connection_service.js';
 
 export const createMessageRequest = async (from, to, content) => {
