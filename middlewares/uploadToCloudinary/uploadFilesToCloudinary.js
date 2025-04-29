@@ -22,6 +22,7 @@ const cloudinaryUploadFiles = async (req, res, next) => {
     let mediaFilesData = []; // Array to store Cloudinary upload results
 
     for (const file of mediaFiles) {
+      /*
       // Determine the resource type based on the file's mimetype
       let resourceType = 'image';
       if (file.mimetype.startsWith('video/')) {
@@ -29,11 +30,16 @@ const cloudinaryUploadFiles = async (req, res, next) => {
       } else if (file.mimetype.startsWith('application/')) {
         resourceType = 'raw'; // For PDFs or other files
       }
+        */
+      // Upload options
+      const uploadOptions = {
+        resource_type: 'auto',
+        chunk_size: 6000000, // 6MB chunks for video uploads
+        timeout: 60000, // 60 seconds timeout for videos
+      };
 
       // Upload the file to Cloudinary
-      const result = await cloudinary.uploader.upload(file.path, {
-        resource_type: resourceType,
-      });
+      const result = await cloudinary.v2.uploader.upload(file.path, uploadOptions);
 
       mediaFilesData.push(result);
 
