@@ -18,4 +18,5 @@ node server.js
 # not yet working
 
 1-npm install --save-dev eslint eslint-plugin-prettier eslint-plugin-unicorn --legacy-peer-deps (download this from terminal)
+
 2-npx eslint . --fix (run this command always before pushing your code to main)
