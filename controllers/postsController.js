@@ -25,6 +25,7 @@ import {
   sharePostService,
   getFeedService,
   deletePostService,
+  searchPostsByKeywordService,
 } from '../services/postService.js';
 
 /**-------------------------------------------------------
@@ -55,7 +56,7 @@ const createPostCtrl = asyncHandler(async (req, res) => {
  *
  *-------------------------------------------------------*/
 const getSinglePostCtrl = asyncHandler(async (req, res) => {
-  const postId = req.params.id;
+  const postId = req.params.postId;
   // Validate ObjectId format
   if (!mongoose.Types.ObjectId.isValid(postId)) {
     return res.status(400).json({ message: 'Invalid Post ID' });
@@ -96,7 +97,7 @@ const editPostCtrl = asyncHandler(async (req, res) => {
   const userId = req.user._id;
 
   // Extract post ID and request body
-  const postId = req.params.id;
+  const postId = req.params.postId;
   const UploadedFiles = req.mediaFilesData || [];
 
   const { content, taggedUsersIds = [], links = [] } = req.body;
@@ -290,6 +291,25 @@ const sharePostCtrl = asyncHandler(async (req, res) => {
 
 /**-------------------------------------------------------
  *
+ * @desc     Search By Keywords
+ * @route    /api/posts/search
+ * @method   GET
+ * @access   Private [Only Logged in User]
+ *
+ *-------------------------------------------------------*/
+
+const searchPostsCtrl = async (req, res) => {
+  try {
+    const { keyword } = req.query;
+    const posts = await searchPostsByKeywordService(keyword);
+    res.status(200).json(posts);
+  } catch (error) {
+    res.status(500).json({ message: 'Error searching posts', error: error.message });
+  }
+};
+
+/**-------------------------------------------------------
+ *
  * @desc     Delete Post
  * @route   /api/posts/:id
  * @method   DELETE
@@ -298,7 +318,7 @@ const sharePostCtrl = asyncHandler(async (req, res) => {
  *-------------------------------------------------------*/
 const deletePostCtrl = asyncHandler(async (req, res) => {
   const userId = req.user._id;
-  const postId = req.params.id;
+  const postId = req.params.postId;
   const message = await deletePostService(postId, userId);
   res.status(200).json({ message: message });
 });
@@ -316,4 +336,5 @@ export {
   getPostSharesCtrl,
   sharePostCtrl,
   deletePostCtrl,
+  searchPostsCtrl,
 };
