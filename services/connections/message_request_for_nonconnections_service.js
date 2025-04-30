@@ -2,6 +2,7 @@ import MessageRequest from '../../models/messagesRequest.js';
 import checkConnection from './check_connection_service.js';
 
 export const createMessageRequest = async (from, to, content) => {
+
   if (from === to) {
     throw new Error('You cannot send a message request to yourself.');
   }

@@ -11,6 +11,7 @@ import unblockUser from '../services/connections/unblock_user_service.js';
 import createMessageRequest from '../services/connections/message_request_for_nonconnections_service.js';
 import get_message_requests from '../services/connections/get_all_message_request_service.js';
 import getBlockedUsers from '../services/connections/get_blocked_list_service.js';
+import acceptMessageRequest from '../services/connections/accept_message_request_service.js';
 
 export const search_user = async (req, res) => {
   try {
@@ -143,5 +144,21 @@ export const get_list_blocked = async (req, res) => {
       res.status(200).json(blockedUsers);
   } catch (error) {
       res.status(500).json({ message: error.message });
+  }
+};
+
+
+export const handleAcceptMessageRequest = async (req, res) => {
+  try {
+    const requestId = req.params.id;
+    const currentUserId = req.user.id;
+
+    const connection = await acceptMessageRequest(requestId, currentUserId);
+    res.status(200).json({
+      message: 'Message request accepted.',
+      connection
+    });
+  } catch (error) {
+    res.status(400).json({ error: error.message });
   }
 };
