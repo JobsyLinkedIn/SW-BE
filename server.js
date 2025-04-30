@@ -125,8 +125,8 @@ app.use('/api/privacy', privacyRoutes);
 app.use('/api/admin', adminRoutes); // Connection routes
 app.use('/api/report', reportRoutes); // Report routes
 app.use('/api/jobs', jobroutes); // Job routes
-app.use('/api/messages', messagesRoutes);
-app.use('/api/conversation', conversationRoutes);
+app.use('/api/messages', messagesRoutes); //messages routes
+app.use('/api/conversation', conversationRoutes); //conversation routes
 
 // 🔴 Place this at the end (AFTER routes)
 app.use(errorHandler);
