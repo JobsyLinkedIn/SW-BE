@@ -194,6 +194,5 @@ export {
   viewUserProfile,
   followUser,
   getProfile,
-  followUser,
   unfollowUser,
 };
