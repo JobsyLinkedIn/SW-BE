@@ -12,6 +12,8 @@ import {
   getJobIdsService,
   getJobDetailsByIdService,
   reportJobService,
+  updateApplicationStatusService,
+  deleteJobService,
 } from '../services/jobServices.js';
 
 export const filterJobs = async (req, res) => {
@@ -132,13 +134,34 @@ export const getJobDetailsById = async (req, res) => {
 
 export const reportJob = async (req, res) => {
   try {
-    const userId = req.user._id; // Get the user ID from the authenticated request
-    const { jobId } = req.params; // Get the job ID from the request parameters
-    const { reason, details } = req.body; // Get the reason and details from the request body
+    const userId = req.user._id; 
+    const { jobId } = req.params; 
+    const { reason, details } = req.body; 
 
     const response = await reportJobService(userId, jobId, reason, details);
     res.status(201).json(response);
   } catch (error) {
     res.status(400).json({ message: error.message });
+  }
+};
+
+export const updateApplicationStatus = async (req, res) => {
+  try {
+    const { jobId, applicantId } = req.params;
+    const { status } = req.body;
+    const response = await updateApplicationStatusService(req.user._id, jobId, applicantId, status);
+    res.status(200).json(response);
+  } catch (error) {
+    res.status(403).json({ message: error.message });
+  }
+};
+
+export const deleteJob = async (req, res) => {
+  try {
+    const { jobId } = req.params;
+    const response = await deleteJobService(req.user._id, jobId);
+    res.status(200).json(response);
+  } catch (error) {
+    res.status(403).json({ message: error.message });
   }
 };

@@ -16,6 +16,8 @@ import {
   getJobIds,
   getJobDetailsById,
   reportJob,
+  deleteJob,
+  updateApplicationStatus,
 } from '../controllers/jobController.js';
 
 const router = express.Router();
@@ -39,7 +41,9 @@ router.get('/applied', getAppliedJobs);
 router.get('/filter', filterJobs);
 router.get('/jobs/ids', getJobIds);//getter for job ids for front end usage
 router.get('/:jobId/details', getJobDetailsById); 
-router.post('/jobs/:jobId/report', authenticateUser, reportJob);
+router.post('/:jobId/report', authenticateUser, reportJob);
+router.patch('/:jobId/applications/:applicantId/status', updateApplicationStatus); // Update application status
+router.delete('/:jobId', deleteJob); // Delete a job
 
 
 export default router;

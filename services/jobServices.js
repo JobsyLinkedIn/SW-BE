@@ -22,67 +22,96 @@ export const createJobService = async (jobData, userId) => {
   return job;
 };
 
-export const filterJobsService = async (filters, page = 1, limit = 10) => {
+export const filterJobsService = async (filters = {}, page = 1, limit = 10) => {
   const query = {};
 
-  // Dynamically add filters to the query if they are provided
-  if (filters.location) {
-    query.location = new RegExp(filters.location, 'i'); // Case-insensitive match
+
+  const location = filters.location?.trim();
+  const industry = filters.industry?.trim();
+  const salaryRange = filters.salaryRange?.trim();
+  const experienceLevel = filters.experienceLevel?.trim();
+  const companyName = filters.company?.trim();
+
+  const hasValidFilters = location || industry || salaryRange || experienceLevel || companyName;
+  if (!hasValidFilters) {
+    return { jobs: [], totalJobs: 0, totalPages: 0 };
   }
 
-  if (filters.industry) {
-    query.industry = new RegExp(filters.industry, 'i'); // Case-insensitive match
+  if (location) {
+    query.location = new RegExp(location, 'i');
   }
 
-  if (filters.salaryRange) {
-    const [minSalary, maxSalary] = filters.salaryRange.split('-').map(Number);
-    query.salary = { $gte: minSalary, $lte: maxSalary };
+  if (industry) {
+    query.industry = new RegExp(industry, 'i');
   }
 
-  if (filters.experienceLevel) {
-    query.experienceLevel = filters.experienceLevel;
+  if (salaryRange && salaryRange.includes('-')) {
+    const [minSalary, maxSalary] = salaryRange.split('-').map(Number);
+    if (!isNaN(minSalary) && !isNaN(maxSalary)) {
+      query.salary = { $gte: minSalary, $lte: maxSalary };
+    }
   }
 
-  if (filters.company) {
-    const company = await Company.findOne({ name: new RegExp(filters.company, 'i') });
+  if (experienceLevel) {
+    query.experienceLevel = experienceLevel;
+  }
+
+  if (companyName) {
+    const company = await Company.findOne({ name: new RegExp(companyName, 'i') });
     if (company) {
       query.company = company._id;
     } else {
-      // If no company matches, return empty results
       return { jobs: [], totalJobs: 0, totalPages: 0 };
     }
   }
 
-  // Fetch jobs based on the dynamically built query
   const jobs = await Job.find(query)
-    .select('-applications') // Exclude applications field
-    .populate('company', 'name') // Populate company name
+    .select('-applications')
+    .populate('company', 'name')
     .skip((page - 1) * limit)
     .limit(limit);
 
-  // Count total jobs matching the query
   const totalJobs = await Job.countDocuments(query);
+  const totalPages = Math.ceil(totalJobs / limit);
 
-  return { jobs, totalJobs, totalPages: Math.ceil(totalJobs / limit) };
+  return { jobs, totalJobs, totalPages };
 };
 
-export const searchJobsService = async (keyword, location, industry, page = 1, limit = 10) => {
+export const searchJobsService = async (keyword = '', location = '', industry = '', page = 1, limit = 10) => {
   const query = {};
 
-  if (keyword) query.title = new RegExp(keyword, 'i');
-  if (location) query.location = new RegExp(location, 'i');
-  if (industry) query.industry = new RegExp(industry, 'i');
+  const titleKeyword = keyword.trim();
+  const locationInput = location.trim();
+  const industryInput = industry.trim();
+
+  if (titleKeyword) {
+    query.title = new RegExp(titleKeyword, 'i');
+  }
+
+  if (locationInput) {
+    query.location = new RegExp(locationInput, 'i');
+  }
+
+  if (industryInput) {
+    query.industry = new RegExp(industryInput, 'i');
+  }
+
+  if (Object.keys(query).length === 0) {
+    return { jobs: [], totalJobs: 0, totalPages: 0 };
+  }
 
   const jobs = await Job.find(query)
-  .select('_id title location company') 
-  .populate('company', 'name')
-  .skip((page - 1) * limit)
-  .limit(limit);
+    .select('_id title location company')
+    .populate('company', 'name')
+    .skip((page - 1) * limit)
+    .limit(limit);
 
   const totalJobs = await Job.countDocuments(query);
+  const totalPages = Math.ceil(totalJobs / limit);
 
-  return { jobs, totalJobs, totalPages: Math.ceil(totalJobs / limit) };
+  return { jobs, totalJobs, totalPages };
 };
+
 
 
 
@@ -90,7 +119,6 @@ export const applyForJobService = async (req) => {
   const userId = req.user._id;
   const { jobId } = req.params;
 
-  // Validate jobId
   if (!mongoose.Types.ObjectId.isValid(jobId)) {
     throw new Error('Invalid Job ID');
   }
@@ -115,9 +143,22 @@ export const applyForJobService = async (req) => {
     throw new Error('Resume and cover letter are required');
   }
 
-  // Include the `job` field when pushing a new application
-  job.applications.push({ job: job._id, applicant: userId, resume, coverLetter });
+  job.applications.push({
+    applicant: userId,
+    resume,
+    coverLetter,
+    status: 'pending',
+    job: jobId,
+  });
   await job.save();
+
+  const user = await User.findById(userId);
+  if (!user) throw new Error('User not found');
+
+  if (!user.appliedJobs.includes(jobId)) {
+    user.appliedJobs.push(jobId);
+    await user.save();
+  }
 
   return { message: 'Job application submitted successfully' };
 };
@@ -126,11 +167,11 @@ export const getApplicationStatusService = async (req) => {
   const userId = req.user._id;
   const { jobId } = req.params;
 
-  const job = await Job.findById(jobId); 
+  const job = await Job.findById(jobId);
   if (!job) throw new Error('Job not found');
 
   const application = job.applications.find(
-    (app) => app.applicant.toString() === userId
+    (app) => app.applicant.toString() === userId.toString()
   );
   if (!application) throw new Error('No application found for this job');
 
@@ -144,15 +185,18 @@ export const saveJobForLaterService = async (req) => {
   const user = await User.findById(userId);
   if (!user) throw new Error('User not found');
 
-  const job = await Job.findById(jobId).select('-applications'); 
+  const job = await Job.findById(jobId).select('-applications');
   if (!job) throw new Error('Job not found');
 
-  if (user.savedJobs.includes(jobId)) throw new Error('Job already saved');
-  user.savedJobs.push(jobId);
+  if (!user.savedJobs.includes(jobId)) {
+    user.savedJobs.push(jobId);
+    await user.save();
+  }
 
-  await user.save();
-  job.savedBy.push(userId);
-  await job.save();
+  if (!job.savedBy.includes(userId)) {
+    job.savedBy.push(userId);
+    await job.save();
+  }
 
   return { message: 'Job saved successfully' };
 };
@@ -162,7 +206,7 @@ export const getSavedJobsService = async (req) => {
 
   const user = await User.findById(userId).populate({
     path: 'savedJobs',
-    select: '-applications', 
+     select: '-applications -savedBy'
   });
   if (!user) throw new Error('User not found');
 
@@ -179,7 +223,8 @@ export const reviewApplicationsService = async (req) => {
 
   const job = await Job.findById(jobId).populate('applications.applicant', 'name email');
   if (!job) throw new Error('Job not found');
-  if (job.postedBy.toString() !== userId) {
+
+  if (job.postedBy.toString() !== userId.toString()) {
     throw new Error('You are not authorized to review applications for this job');
   }
 
@@ -210,7 +255,8 @@ export const contactCandidateService = async (req) => {
 export const getAppliedJobsService = async (userId) => {
   const user = await User.findById(userId).populate({
     path: 'appliedJobs',
-    populate: { path: 'company', select: 'name location industry' }, 
+    populate: { path: 'company', select: 'name location industry' },
+    select: '-applications -savedBy'
   });
 
   if (!user) throw new Error('User not found');
@@ -219,7 +265,7 @@ export const getAppliedJobsService = async (userId) => {
     throw new Error('No applied jobs found');
   }
 
-  return user.appliedJobs; 
+  return user.appliedJobs;
 };
 
 export const getJobIdsService = async () => {
@@ -263,4 +309,41 @@ export const reportJobService = async (userId, jobId, reason, details) => {
   await report.save();
 
   return { message: 'Job reported successfully' };
+};
+
+export const updateApplicationStatusService = async (userId, jobId, applicantId, status) => {
+  if (!mongoose.Types.ObjectId.isValid(jobId) || !mongoose.Types.ObjectId.isValid(applicantId)) {
+    throw new Error('Invalid Job ID or Applicant ID');
+  }
+
+  const job = await Job.findById(jobId);
+  if (!job) throw new Error('Job not found');
+
+  if (job.postedBy.toString() !== userId.toString()) {
+    throw new Error('You are not authorized to update the application status for this job');
+  }
+  const application = job.applications.find(
+    (app) => app.applicant.toString() === applicantId
+  );
+  if (!application) throw new Error('Application not found');
+
+  application.status = status;
+  await job.save();
+
+  return { message: `Application status updated to ${status}` };
+};
+
+export const deleteJobService = async (userId, jobId) => {
+  if (!mongoose.Types.ObjectId.isValid(jobId)) {
+    throw new Error('Invalid Job ID');
+  }
+
+  const job = await Job.findById(jobId);
+  if (!job) throw new Error('Job not found');
+  if (job.postedBy.toString() !== userId.toString()) {
+    throw new Error('You are not authorized to delete this job');
+  }
+  await Job.findByIdAndDelete(jobId);
+
+  return { message: 'Job deleted successfully' };
 };
