@@ -2,6 +2,7 @@ import canSendConnectionRequest from '../services/privacy/connection_privacy_ser
 import reportPost from '../services/privacy/report_post_service.js';
 import reportUser from '../services/privacy/report_user_service.js';
 import  updateConnectionPrivacy  from '../services/privacy/handling_user_privacy_service.js';
+import  getUserPrivacySetting  from '../services/privacy/get_privacy_info_service.js';
 
 export const sendConnectionRequestController = async (req, res) => {
   try {
@@ -70,5 +71,18 @@ export const changeConnectionPrivacy = async (req, res) => {
   } catch (error) {
     const statusCode = error.statusCode || 500;
     res.status(statusCode).json({ error: error.message });
+  }
+};
+
+
+
+export const getConnectionPrivacy = async (req, res) => {
+  const userId = req.user._id;
+
+  try {
+    const privacySetting = await getUserPrivacySetting(userId);
+    res.status(200).json({ connectionPrivacy: privacySetting });
+  } catch (error) {
+    res.status(400).json({ error: error.message });
   }
 };

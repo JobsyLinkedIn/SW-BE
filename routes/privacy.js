@@ -7,5 +7,6 @@ router.put('/user/connection-privacy', authenticateUser, privacy_controller.send
 router.post('/report/user/:targetUserId', authenticateUser, privacy_controller.reportUserController);
 router.post('/report/post/:postId', authenticateUser, privacy_controller.reportPostController);
 router.patch('/users/change-privacy', authenticateUser ,privacy_controller.changeConnectionPrivacy);
+router.get('/user/privacy', authenticateUser, privacy_controller.getConnectionPrivacy);
 
 export default router;
