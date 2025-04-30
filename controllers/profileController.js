@@ -1,4 +1,7 @@
 import * as profileService from '../services/profileServices.js';
+import follow_target_service from '../services/connections/follow_service.js';
+import unfollow_target_service from '../services/connections/unfollow_service.js';
+
 
 const createOrUpdateProfile = async (req, res) => {
   try {
@@ -103,7 +106,19 @@ const viewUserProfile = async (req, res) => {
 
 const followUser = async (req, res) => {
   try {
-    const response = await profileService.followUser(req, req.body.targetUserName); // Pass targetUserName
+    const { targetId, targetType } = req.body; // Extract targetId and targetType from request body
+    const response = await follow_target_service(req.user.email, targetId, targetType);
+    res.status(200).json(response);
+  } catch (error) {
+    console.error(error);
+    res.status(400).json({ msg: error.message });
+  }
+};
+
+const unfollowUser = async (req, res) => {
+  try {
+    const { targetId, targetType } = req.body; // Extract targetId and targetType from request body
+    const response = await unfollow_target_service(req.user.email, targetId, targetType);
     res.status(200).json(response);
   } catch (error) {
     console.error(error);
@@ -179,4 +194,6 @@ export {
   viewUserProfile,
   followUser,
   getProfile,
+  followUser,
+  unfollowUser,
 };

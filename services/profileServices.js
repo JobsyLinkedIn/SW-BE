@@ -149,19 +149,6 @@ const viewUserProfile = async (req) => {
   return { profile, message: 'User profile retrieved successfully' };
 };
 
-const followUser = async (req, targetUserName) => {
-  const userId = req.user._id; 
-  const targetProfile = await Profile.findOne({ name: targetUserName }); // Find target user by name
-  if (!targetProfile) throw new Error('Target user not found');
-
-  if (!targetProfile.followers.includes(userId)) {
-    targetProfile.followers.push(userId);
-    await targetProfile.save();
-  }
-
-  return { message: 'User followed successfully' };
-};
-
 const deleteWorkExperience = async (req, workExperienceId) => {
   const userId = req.user._id; 
   const profile = await Profile.findOne({ userId });
@@ -217,6 +204,5 @@ export {
   deleteSkills, 
   updatePrivacySettings,
   viewUserProfile,
-  followUser,
   getProfile,
 };

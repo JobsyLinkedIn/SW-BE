@@ -31,6 +31,7 @@ const profileSchema = new mongoose.Schema({
   resume: String,
   privacySettings: Object,
   followers: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+  following: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
 });
 
 const Profile = mongoose.model('Profile', profileSchema);

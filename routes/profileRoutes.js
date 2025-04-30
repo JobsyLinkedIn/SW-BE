@@ -18,7 +18,8 @@ import {
   deleteWorkExperience,
   deleteEducation, 
   deleteSkills, 
-  getProfile
+  getProfile,
+  unfollowUser,
 } from '../controllers/profileController.js';
 
 const router = express.Router();
@@ -54,5 +55,7 @@ router.put('/privacy', updatePrivacySettings);
 router.get('/user', viewUserProfile); 
 router.post('/follow', followUser);
 router.get('/profile', getProfile);
+router.post('/follow', followUser); // Follow a user or company
+router.post('/unfollow', unfollowUser); // Unfollow a user or company
 
 export default router;
