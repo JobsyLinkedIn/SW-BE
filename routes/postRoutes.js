@@ -13,33 +13,35 @@ import {
   getPostSharesCtrl,
   sharePostCtrl,
   deletePostCtrl,
+  searchPostsCtrl
 } from '../controllers/postsController.js';
 const router = express.Router();
 import uploadByMulter from '../middlewares/multer/multer.js';
 import authenticateUser from '../middlewares/authenticateUser.js';
 import cloudinaryUploadFiles from '../middlewares/uploadToCloudinary/uploadFilesToCloudinary.js';
+import {checkBlocked} from "../middlewares/checkBlocked"
 
 // api/posts
 router
   .route('/')
   .get(authenticateUser, getFeedCtrl)
   .post(authenticateUser, uploadByMulter.array('media'), cloudinaryUploadFiles, createPostCtrl);
-//We shoule Use Verify Token MiddleWare First
-
-// api/posts/:id
+// Search posts by keyword
+router.get('/search', authenticateUser,searchPostsCtrl);
+// api/posts/:postId
 router
-  .route('/:id')
-  .get(getSinglePostCtrl)
+  .route('/:postId')
+  .get(authenticateUser,checkBlocked,getSinglePostCtrl)
   .put(authenticateUser, uploadByMulter.array('media'), cloudinaryUploadFiles, editPostCtrl)
   .delete(authenticateUser, deletePostCtrl);
 
 // api/posts/postId/likes
-router.route('/:postId/likes').put(authenticateUser, likePostCtrl).get(getPostLikesCtrl); // Route to fetch users who make like to  a specific post with pagination
+router.route('/:postId/likes').put(authenticateUser, checkBlocked,likePostCtrl).get(getPostLikesCtrl); // Route to fetch users who make like to  a specific post with pagination
 
 // /api/posts/:postId/comments
 router
   .route('/:postId/comments')
-  .post(authenticateUser, addCommentCtrl) // Add a new comment to a post
+  .post(authenticateUser, checkBlocked,addCommentCtrl) // Add a new comment to a post
   .get(getPostCommentsCtrl); // Get comments of a post
 // api/posts/comment/:commentId
 router
@@ -49,5 +51,7 @@ router
 
 // Route to fetch users who make share to  a specific post with pagination
 router.route('/:postId/shares').get(getPostSharesCtrl).post(authenticateUser, sharePostCtrl);
+
+
 
 export default router;

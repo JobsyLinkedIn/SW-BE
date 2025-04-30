@@ -637,6 +637,28 @@ const deletePostService = async (postId, userId) => {
   }
 };
 
+const searchPostsByKeywordService = async (keyword) => {
+  if (!keyword || keyword.trim() === '') return [];
+
+  const posts = await Post.find({
+    content: { $regex: keyword, $options: 'i' },
+  })
+    .populate('author', 'name')
+    .populate('refProfile', 'name profilePicture bio')
+    .populate('taggedUsers', 'name')
+    .populate({
+      path: 'sharedPost',
+      select: '-reportedBy',
+      populate: [
+        { path: 'author', select: 'name' },
+        { path: 'refProfile', select: 'name profilePicture' },
+      ],
+    })
+    .lean();
+
+  return posts;
+};
+
 export {
   createPostService,
   getSinglePostService,
@@ -651,4 +673,5 @@ export {
   sharePostService,
   getFeedService,
   deletePostService,
+  searchPostsByKeywordService,
 };
