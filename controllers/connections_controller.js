@@ -12,6 +12,7 @@ import createMessageRequest from '../services/connections/message_request_for_no
 import get_message_requests from '../services/connections/get_all_message_request_service.js';
 import getBlockedUsers from '../services/connections/get_blocked_list_service.js';
 import acceptMessageRequest from '../services/connections/accept_message_request_service.js';
+import declineMessageRequest from '../services/connections/decline_message_request_service.js';
 
 export const search_user = async (req, res) => {
   try {
@@ -162,3 +163,21 @@ export const handleAcceptMessageRequest = async (req, res) => {
     res.status(400).json({ error: error.message });
   }
 };
+
+
+
+export const declineRequestController = async (req, res) => {
+  const { id } = req.params;
+  const currentUserId = req.user.id; 
+
+  try {
+    const result = await declineMessageRequest(id, currentUserId);
+    res.status(200).json(result);
+  } catch (error) {
+    res.status(400).json({
+      message: 'Error while declining the message request',
+      error: error.message,
+    });
+  }
+};
+

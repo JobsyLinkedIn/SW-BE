@@ -20,5 +20,7 @@ router.post('/unblock', authenticateUser,connections_controller.unblock_user);
 router.post('/message', authenticateUser,connections_controller.sendMessageRequest);
 router.get('/getRequest/:id',authenticateUser,connections_controller.getAllMessageRequests);
 router.post('/message-requests/:id/accept', authenticateUser, connections_controller.handleAcceptMessageRequest);
+router.delete('/decline/:id', authenticateUser, connections_controller.declineRequestController);  
+
 
 export default router;
