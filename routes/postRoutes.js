@@ -19,7 +19,7 @@ const router = express.Router();
 import uploadByMulter from '../middlewares/multer/multer.js';
 import authenticateUser from '../middlewares/authenticateUser.js';
 import cloudinaryUploadFiles from '../middlewares/uploadToCloudinary/uploadFilesToCloudinary.js';
-import {checkBlocked} from "../middlewares/checkBlocked"
+import {checkBlocked} from "../middlewares/checkBlocked.js"
 
 // api/posts
 router

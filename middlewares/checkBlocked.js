@@ -1,5 +1,5 @@
 import UserDetails from '../models/user_details.js';
-import Post from '../models/post.js';
+import {postModel as Post} from '../models/post.js';
 import mongoose from 'mongoose';
 
 const checkBlocked = async (req, res, next) => {
