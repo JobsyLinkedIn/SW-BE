@@ -10,6 +10,7 @@ import getCompanyJobsService from '../services/company/get_jobs_service.js';
 import getCompanyFollowersCountService from '../services/company/get_followers_service.js';
 import { getCompanyFollowersService } from '../services/company/get_attributes_follower_service.js'; 
 import checkIfUserFollowsCompany from "../services/company/check_if_following_service.js";
+import Company from "../models/company.js";
 
 export const createCompanyController = async (req, res) => {
   try {
@@ -53,11 +54,12 @@ export const createJobController = async (req, res) => {
       industry: req.body.industry,
       experienceLevel: req.body.experienceLevel,
       salary: req.body.salary,
-      company: req.body.company,
       postedBy: req.user._id,
     };
+    const { companyId } = req.params; 
+    console.log("cont",companyId)
+    const newJob = await createJobService(jobData,companyId);
 
-    const newJob = await createJobService(jobData);
     res.status(201).json({ message: 'Job posted successfully', job: newJob });
   } catch (error) {
     res.status(500).json({ message: 'Error posting job', error });
@@ -99,12 +101,24 @@ export const createCompanyAnnouncement = async (req, res) => {
     const UploadedFiles = req.mediaFilesData || [];
     const userId = req.user._id;
     const post = await createPostService({ userId, content, taggedUsersIds, links, UploadedFiles });
+
+    const { companyId } = req.params; 
+    console.log("Company ID:", companyId);
+
+    await Company.findByIdAndUpdate(
+      companyId,
+      { $push:{ announcement: post._id }},
+      { new: true }
+
+    );
     res.status(201).json({ message: 'Post created successfully', post });
 
   } catch (error) {
-    return res.status(500).json({ message: 'Server Error' });
+    console.error("Error:", error); 
+    return res.status(500).json({ message: 'Server Error', error: error.message });
   }
 };
+
 
 
 export const getCompanyById = async (req, res) => {

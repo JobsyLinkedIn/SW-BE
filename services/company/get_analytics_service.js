@@ -15,10 +15,11 @@ const getCompanyJobAnalytics = async (companyId) => {
   const totalFollowers = company.followers.length;
 
   // Applications count for all jobs
-  const totalApplications = await JobApplication.countDocuments({ job: { $in: company.jobPostings } });
-
+  const jobs = await Job.find({ _id: { $in: company.jobPostings } }, 'applications');
+  const totalApplications = jobs.reduce((sum, job) => sum + job.applications.length, 0);
+  
   // Announcements count
-  const totalAnnouncements = await Post.countDocuments({ author: companyId });
+  const totalAnnouncements = company.announcement.length;
 
   return {
     totalFollowers,

@@ -10,6 +10,7 @@ const companySchema = new mongoose.Schema({
   createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   createdAt: { type: Date, default: Date.now },
   jobPostings: [{ type: mongoose.Schema.Types.ObjectId, ref: "Job" }],
+  announcement: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Post', default: [] }], 
 });
 
 const Company = mongoose.model('Company', companySchema, 'Company');

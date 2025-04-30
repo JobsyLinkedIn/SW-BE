@@ -9,8 +9,8 @@ const authorizeCompanyUser = async (req, res, next) => {
     if (!company) {
       return res.status(404).json({ message: 'Company not found' });
     }
-    console.log("ayhaaga",company.createdBy.toString());
-    console.log("ayhaaga2",req.user._id.toString());
+    // console.log("ayhaaga",company.createdBy.toString());
+    // console.log("ayhaaga2",req.user._id.toString());
 
     if (company.createdBy.toString() !== req.user._id.toString()) {
         return res.status(403).json({ message: 'You are not authorized to post jobs for this company' });
