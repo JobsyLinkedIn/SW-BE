@@ -7,6 +7,10 @@ const CommentSchema = new mongoose.Schema(
       ref: 'User',
       required: true,
     },
+    refProfile: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Profile',
+    },
     post: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Post',

@@ -36,14 +36,7 @@ import {
  *
  *-------------------------------------------------------*/
 const createPostCtrl = asyncHandler(async (req, res) => {
-  //TODO : Add MiddleWare to Handle Token Verifecation and Toekn Payload Extraction
-  // Extract and validate token
-  const authHeader = req.headers.authorization;
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return res.status(401).json({ message: 'Unauthorized: No token provided' });
-  }
-  const token = authHeader.split(' ')[1];
-  const userId = getUserIdFromToken(token);
+  const userId = req.user._id;
 
   const { content, taggedUsersIds = [], links = [] } = req.body;
   const UploadedFiles = req.mediaFilesData || [];
@@ -79,13 +72,7 @@ const getSinglePostCtrl = asyncHandler(async (req, res) => {
  * @access   Private [Only Logged in user]
  */
 const getFeedCtrl = asyncHandler(async (req, res) => {
-  // Extract and validate token
-  if (!req.headers.authorization) {
-    return res.status(401).json({ message: 'Unauthorized' });
-  }
-
-  const token = req.headers.authorization.split(' ')[1];
-  const userId = getUserIdFromToken(token);
+  const userId = req.user._id;
 
   // Extract query parameters (pagination)
   const page = parseInt(req.query.page) || 1;
@@ -106,18 +93,14 @@ const getFeedCtrl = asyncHandler(async (req, res) => {
  *
  *-------------------------------------------------------*/
 const editPostCtrl = asyncHandler(async (req, res) => {
-  // Extract and validate token
-  const authHeader = req.headers.authorization;
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return res.status(401).json({ message: 'Unauthorized: No token provided' });
-  }
-  const token = authHeader.split(' ')[1];
-  const userId = getUserIdFromToken(token);
+  const userId = req.user._id;
 
   // Extract post ID and request body
   const postId = req.params.id;
   const UploadedFiles = req.mediaFilesData || [];
-  const postData = { ...req.body, UploadedFiles, userId };
+
+  const { content, taggedUsersIds = [], links = [] } = req.body;
+  const postData = { content, taggedUsersIds, links, UploadedFiles, userId };
 
   // Call service function
   const updatedPost = await editPostService(postId, postData);
@@ -136,16 +119,7 @@ const editPostCtrl = asyncHandler(async (req, res) => {
  *-------------------------------------------------------*/
 const likePostCtrl = asyncHandler(async (req, res) => {
   const postId = req.params.postId;
-
-  const authHeader = req.headers.authorization;
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    const error = new Error('Unauthorized: No token provided');
-    error.statusCode = 401;
-    throw error;
-  }
-
-  const token = authHeader.split(' ')[1];
-  const userId = getUserIdFromToken(token);
+  const userId = req.user._id;
 
   const response = await likePostService(postId, userId);
 
@@ -165,13 +139,7 @@ const addCommentCtrl = asyncHandler(async (req, res) => {
   const postId = req.params.postId;
   const { content = null, taggedUsersIds = [] } = req.body;
 
-  // Extract user ID from token
-  const authHeader = req.headers.authorization;
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return res.status(401).json({ message: 'Unauthorized: No token provided' });
-  }
-  const token = authHeader.split(' ')[1];
-  const userId = getUserIdFromToken(token);
+  const userId = req.user._id;
 
   // Call Service
   const comment = await addCommentService({ postId, userId, content, taggedUsersIds });
@@ -189,15 +157,7 @@ const addCommentCtrl = asyncHandler(async (req, res) => {
  *-------------------------------------------------------*/
 const deleteCommentCtrl = asyncHandler(async (req, res) => {
   const commentId = req.params.commentId;
-
-  // ✅ Extract user ID from token
-  const authHeader = req.headers.authorization;
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return res.status(401).json({ message: 'Unauthorized: No token provided' });
-  }
-  const token = authHeader.split(' ')[1];
-  const userId = getUserIdFromToken(token);
-
+  const userId = req.user._id;
   // ✅ Call service function
   await deleteCommentService(commentId, userId);
 
@@ -217,13 +177,7 @@ const editCommentCtrl = asyncHandler(async (req, res) => {
   const commentId = req.params.commentId;
   const { content = null, taggedUsersIds = [] } = req.body;
 
-  // ✅ Extract user ID from token
-  const authHeader = req.headers.authorization;
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return res.status(401).json({ message: 'Unauthorized: No token provided' });
-  }
-  const token = authHeader.split(' ')[1];
-  const userId = getUserIdFromToken(token);
+  const userId = req.user._id;
 
   // ✅ Call Service
   const updatedComment = await editCommentService(commentId, { content, taggedUsersIds, userId });
@@ -241,13 +195,6 @@ const editCommentCtrl = asyncHandler(async (req, res) => {
  */
 
 const getPostCommentsCtrl = asyncHandler(async (req, res) => {
-  const authHeader = req.headers.authorization;
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return res.status(401).json({ message: 'Unauthorized: No token provided' });
-  }
-  const token = authHeader.split(' ')[1];
-  const userId = getUserIdFromToken(token);
-
   const postId = req.params.postId;
   let { page = 1, limit = 10 } = req.query;
 
@@ -277,11 +224,18 @@ const getPostLikesCtrl = asyncHandler(async (req, res) => {
   limit = parseInt(limit);
 
   // ✅ Call Service
-  const likes = await getPostLikesService(postId, page, limit);
+  const { likes, currentPage, totalPages, totalLikesCount } = await getPostLikesService(
+    postId,
+    page,
+    limit
+  );
 
   res.status(200).json({
     message: 'Post likes retrieved successfully',
-    likes,
+    likes: likes,
+    currentPage: currentPage,
+    totalPages: totalPages,
+    totalLikesCount: totalLikesCount,
   });
 });
 
@@ -301,11 +255,18 @@ const getPostSharesCtrl = asyncHandler(async (req, res) => {
   limit = parseInt(limit);
 
   // ✅ Call Service
-  const shares = await getPostSharesService(postId, page, limit);
+  const { shares, currentPage, totalPages, totalSharesCount } = await getPostSharesService(
+    postId,
+    page,
+    limit
+  );
 
   res.status(200).json({
     message: 'Post shares retrieved successfully',
     shares,
+    currentPage,
+    totalPages,
+    totalSharesCount,
   });
 });
 
@@ -318,14 +279,7 @@ const getPostSharesCtrl = asyncHandler(async (req, res) => {
  *
  *-------------------------------------------------------*/
 const sharePostCtrl = asyncHandler(async (req, res) => {
-  //TODO : Add MiddleWare to Handle Token Verifecation and Toekn Payload Extraction
-  // Extract and validate token
-  const authHeader = req.headers.authorization;
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return res.status(401).json({ message: 'Unauthorized: No token provided' });
-  }
-  const token = authHeader.split(' ')[1];
-  const userId = getUserIdFromToken(token);
+  const userId = req.user._id;
   const sharedPostId = req.params.postId;
   const { content = '', taggedUsersIds = [] } = req.body;
 
@@ -343,14 +297,7 @@ const sharePostCtrl = asyncHandler(async (req, res) => {
  *
  *-------------------------------------------------------*/
 const deletePostCtrl = asyncHandler(async (req, res) => {
-  //TODO : Add MiddleWare to Handle Token Verifecation and Toekn Payload Extraction
-  // Extract and validate token
-  const authHeader = req.headers.authorization;
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return res.status(401).json({ message: 'Unauthorized: No token provided' });
-  }
-  const token = authHeader.split(' ')[1];
-  const userId = getUserIdFromToken(token);
+  const userId = req.user._id;
   const postId = req.params.id;
   const message = await deletePostService(postId, userId);
   res.status(200).json({ message: message });
