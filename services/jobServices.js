@@ -3,6 +3,8 @@ import User from '../models/user.js';
 import Company from '../models/company.js';
 import mongoose from 'mongoose';
 import Report from '../models/report.js';
+import { startConversationWithFirstMessage } from '../services/messagesServices.js';
+
 
 export const createJobService = async (jobData, userId) => {
   let company = await Company.findOne({ createdBy: userId });
@@ -236,19 +238,29 @@ export const contactCandidateService = async (req) => {
   const { jobId, candidateId } = req.params;
   const { message } = req.body;
 
-  const job = await Job.findById(jobId)
+  
+  const job = await Job.findById(jobId);
   if (!job) throw new Error('Job not found');
 
-  if (job.postedBy.toString() !== userId) {
+  if (job.postedBy.toString() !== userId.toString()) {
     throw new Error('You are not authorized to contact candidates for this job');
   }
 
   const candidate = job.applications.find(
-    (application) => application.applicant.toString() === candidateId
+    (application) => application.applicant.toString() === candidateId.toString()
   );
   if (!candidate) throw new Error('Candidate not found for this job');
 
-  return { message: `Message sent to candidate: ${message}` };
+  const conversation = await startConversationWithFirstMessage(
+    userId, 
+    candidateId, 
+    message 
+  );
+
+  return {
+    message: `Message sent to candidate: ${message}`,
+    conversation,
+  };
 };
 
 
