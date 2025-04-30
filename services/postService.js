@@ -16,17 +16,6 @@ const createPostService = async ({
   links = [],
   UploadedFiles = [],
 }) => {
-  // TODO: Handle Uploaded Media (Implementation Pending)
-  /*
-  // ✅ Validate Post Data
-  const { error } = validateCreatePost({ content, taggedUsersIds, links });
-  if (error) {
-    const err = new Error(error.details[0].message);
-    err.statusCode = 400;
-    throw err;
-  }
-  */
-
   // ✅ Validate Tagged Users Exist
   const isTaggedUsersExist = await validateDocumentsExistence(User, taggedUsersIds);
   if (!areValidObjectIds(taggedUsersIds) || !isTaggedUsersExist) {
@@ -43,7 +32,9 @@ const createPostService = async ({
       type: file.resource_type,
     }));
   }
-
+  // ✅ Get user profile
+  const userProfile = await Profile.findOne({ userId }).select('_id').lean();
+  const refProfile = userProfile?._id || null;
   // ✅ Create and Save the Post
   const post = await Post.create({
     author: userId,
@@ -51,6 +42,7 @@ const createPostService = async ({
     taggedUsers: taggedUsersIds,
     links,
     media,
+    refProfile,
   });
 
   return post;
@@ -58,16 +50,32 @@ const createPostService = async ({
 
 const getSinglePostService = async (postId) => {
   const post = await Post.findById(postId)
-    .populate('author', 'name profilePicture')
-    .populate('taggedUsers', 'name');
+    .populate('author', 'name')
+    .populate('refProfile', 'name profilePicture bio')
+    .populate('taggedUsers', 'name')
+    .populate({
+      path: 'sharedPost',
+      select: '-reportedBy',
+      populate: [
+        // Array for multiple nested populates
+        {
+          path: 'author', // Populate author inside sharedPost
+          select: 'name', // Fields from User model
+        },
+        {
+          path: 'refProfile',
+          select: 'name profilePicture',
+        },
+      ],
+    })
+    .lean();
 
   if (!post) {
     const error = new Error('Post not found');
     error.statusCode = 404;
     throw error;
   }
-
-  return post.toObject();
+  return post;
 };
 
 /**
@@ -78,29 +86,51 @@ const getSinglePostService = async (postId) => {
  * @returns {Object} Feed posts with pagination data
  */
 const getFeedService = async (userId, page = 1, limit = 10) => {
-  // Fetch user profile to get followers and connections
-  const [userProfile, userDetails] = await Promise.all([
-    Profile.findOne({ userId }).select('followers'),
-    UserDetails.findOne({ user: userId }).select('connections'),
+  //Fetch user profile to get followers and connections
+  //Considering that : if it is blocked, it will be removed from followers and connections
+  const [followedProfile = [], followedUsers = [], connections = []] = await Promise.all([
+    Profile.find({ followers: userId }).select('userId').lean(),
+    UserDetails.find({ followers: userId }).select('user').lean(),
+    User.findOne({ _id: userId }).select('connections').lean(),
   ]);
-
-  const followedUsers = userProfile?.followers || [];
-  const connections = userDetails?.connections || [];
-  const feedUsers = [...followedUsers, ...connections, userId]; // Include self-posts
+  let usersWhosePostsAreTargeted = [
+    ...followedProfile.map((profile) => profile.userId),
+    ...followedUsers.map((user) => user.user),
+    ...(connections?.connections || []),
+    userId,
+  ];
+  // Convert to Set to remove duplicates, then back to array
+  usersWhosePostsAreTargeted = [...new Set(usersWhosePostsAreTargeted)];
 
   // Pagination calculations
   const skip = (page - 1) * limit;
 
   // Fetch paginated posts
-  const feedPosts = await Post.find({ author: { $in: feedUsers } })
-    .populate('author', 'name profilePicture')
+  const feedPosts = await Post.find({ author: { $in: usersWhosePostsAreTargeted } })
+    .populate('author', 'name')
+    .populate('refProfile', 'name profilePicture bio')
     .populate('taggedUsers', 'name')
+    .populate({
+      path: 'sharedPost',
+      select: '-reportedBy',
+      populate: [
+        // Array for multiple nested populates
+        {
+          path: 'author', // Populate author inside sharedPost
+          select: 'name', // Fields from User model
+        },
+        {
+          path: 'refProfile',
+          select: 'name profilePicture',
+        },
+      ],
+    })
     .sort({ createdAt: -1 }) // Latest posts first
     .skip(skip)
     .limit(limit);
 
   // Get total count for pagination metadata
-  const totalPosts = await Post.countDocuments({ author: { $in: feedUsers } });
+  const totalPosts = await Post.countDocuments({ author: { $in: usersWhosePostsAreTargeted } });
 
   return {
     posts: feedPosts,
@@ -129,7 +159,7 @@ const editPostService = async (
   }
 
   // Ensure only author can edit
-  if (post.author.toString() !== userId) {
+  if (post.author.toString() !== userId.toString()) {
     const error = new Error('You are not authorized to edit this post');
     error.statusCode = 403; // Forbidden
     error.code = 'UNAUTHORIZED_ACCESS';
@@ -179,9 +209,24 @@ const editPostService = async (
     { $set: { content, taggedUsers: taggedUsersIds, links, media } },
     { new: true }
   )
-    .populate('author', 'name profilePicture')
-    .populate('taggedUsers', 'name profilePicture')
-    .populate('sharedPost');
+    .populate('author', 'name')
+    .populate('refProfile', 'name profilePicture')
+    .populate('taggedUsers', 'name')
+    .populate({
+      path: 'sharedPost',
+      select: '-reportedBy',
+      populate: [
+        // Array for multiple nested populates
+        {
+          path: 'author', // Populate author inside sharedPost
+          select: 'name', // Fields from User model
+        },
+        {
+          path: 'refProfile',
+          select: 'name profilePicture',
+        },
+      ],
+    });
 
   return updatedPost;
 };
@@ -252,13 +297,16 @@ const addCommentService = async ({ postId, userId, content = null, taggedUsersId
     error.statusCode = 404;
     throw error;
   }
-
+  // ✅ Get user profile
+  const userProfile = await Profile.findOne({ userId }).select('_id').lean();
+  const refProfile = userProfile?._id || null;
   // Create the new comment
   const comment = await Comment.create({
     author: userId,
     post: postId,
     content,
     taggedUsers: taggedUsersIds,
+    refProfile,
   });
 
   // Update the post with the new comment
@@ -288,7 +336,7 @@ const deleteCommentService = async (commentId, userId) => {
 
   // ✅ Ensure User is Author or Admin
   const user = await User.findById(userId).lean();
-  if (comment.author.toString() !== userId && !user?.isAdmin) {
+  if (comment.author.toString() !== userId.toString() && !user?.isAdmin) {
     const error = new Error('Forbidden: You are not authorized to delete this comment');
     error.statusCode = 403; // Forbidden
     error.code = 'UNAUTHORIZED_ACCESS';
@@ -316,7 +364,7 @@ const editCommentService = async (commentId, { content, taggedUsersIds = [], use
   if (!comment) throw { statusCode: 404, message: 'Comment not found' };
 
   // ✅ Ensure User is the Author
-  if (comment.author.toString() !== userId) {
+  if (comment.author.toString() !== userId.toString()) {
     throw { statusCode: 403, message: 'Forbidden: You cannot edit this comment' };
   }
 
@@ -358,7 +406,8 @@ const getPostCommentsService = async (postId, page, limit) => {
 
   // ✅ Fetch comments with pagination
   const comments = await Comment.find({ post: postId })
-    .populate('author', 'name profilePicture')
+    .populate('author', 'name')
+    .populate('refProfile', 'name profilePicture bio')
     .populate('taggedUsers', 'name')
     .sort({ createdAt: -1 })
     .skip((page - 1) * limit)
@@ -367,50 +416,110 @@ const getPostCommentsService = async (postId, page, limit) => {
   return { totalComments, totalPages: Math.ceil(totalComments / limit), comments };
 };
 
-const getPostLikesService = async (postId, page, limit) => {
-  // ✅ Validate postId
+const getPostLikesService = async (postId, page = 1, limit = 10) => {
+  // ✅ 1. Validate postId
   if (!postId || !mongoose.Types.ObjectId.isValid(postId)) {
     throw { statusCode: 400, message: 'Invalid Post ID' };
   }
 
-  // ✅ Find the post and populate likes
-  const post = await Post.findById(postId).populate({
-    path: 'likes',
-    select: 'name profilePicture',
-    options: {
-      skip: (page - 1) * limit,
-      limit: limit,
-    },
-  });
+  // ✅ 2. Fetch post with paginated likes (user IDs only)
+  const post = await Post.findById(postId)
+    .select('likes')
+    .slice('likes', [(page - 1) * limit, limit]); // Pagination
 
   if (!post) {
     throw { statusCode: 404, message: 'Post not found' };
   }
 
-  return post.likes;
+  // ✅ 3. Aggregate: Join User + Profile, then filter by users who liked the post
+  const likesWithProfiles = await User.aggregate([
+    // Match users who liked the post (from `post.likes`)
+    { $match: { _id: { $in: post.likes.map((u) => u._id) } } },
+
+    // Join with Profile collection (like SQL JOIN)
+    {
+      $lookup: {
+        from: 'profiles', // Collection name (case-sensitive!)
+        localField: '_id', // User._id
+        foreignField: 'userId', // Profile.userId
+        as: 'profile', // Stores the joined profile docs
+      },
+    },
+
+    // Unwind the profile array (since $lookup returns an array)
+    { $unwind: { path: '$profile', preserveNullAndEmptyArrays: true } },
+
+    // Project (select) only the fields we need
+    {
+      $project: {
+        _id: 1,
+        userName: '$name',
+        name: { $ifNull: ['$profile.name', '$name'] }, // Use profile.name if exists, else user.name
+        profilePicture: '$profile.profilePicture',
+        // Add other fields if needed (e.g., email, bio)
+      },
+    },
+  ]);
+
+  return {
+    likes: likesWithProfiles,
+    currentPage: page,
+    totalPages: Math.ceil(post.likesCount / limit),
+    totalLikesCount: post.likesCount,
+  };
 };
 
-const getPostSharesService = async (postId, page, limit) => {
-  // ✅ Validate postId
+const getPostSharesService = async (postId, page = 1, limit = 10) => {
+  // ✅ 1. Validate postId
   if (!postId || !mongoose.Types.ObjectId.isValid(postId)) {
     throw { statusCode: 400, message: 'Invalid Post ID' };
   }
 
-  // ✅ Find the post and populate shares
-  const post = await Post.findById(postId).populate({
-    path: 'shares',
-    select: 'name profilePicture',
-    options: {
-      skip: (page - 1) * limit,
-      limit: limit,
-    },
-  });
+  // ✅ 2. Fetch post with paginated shares (user IDs only)
+  const post = await Post.findById(postId)
+    .select('shares')
+    .slice('shares', [(page - 1) * limit, limit]); // Pagination
 
   if (!post) {
     throw { statusCode: 404, message: 'Post not found' };
   }
 
-  return post.shares;
+  // ✅ 3. Aggregate: Join User + Profile for sharing users
+  const sharesWithProfiles = await User.aggregate([
+    // Match users who shared the post (from `post.shares`)
+    { $match: { _id: { $in: post.shares.map((u) => u._id) } } },
+
+    // Join with Profile collection
+    {
+      $lookup: {
+        from: 'profiles',
+        localField: '_id', // User._id
+        foreignField: 'userId', // Profile.userId
+        as: 'profile',
+      },
+    },
+
+    // Unwind the profile array
+    { $unwind: { path: '$profile', preserveNullAndEmptyArrays: true } },
+
+    // Project the desired fields
+    {
+      $project: {
+        _id: 1,
+        userName: '$name', // Direct from User model
+        name: { $ifNull: ['$profile.name', '$name'] }, // Profile name preferred
+        profilePicture: '$profile.profilePicture',
+        // Add other fields as needed
+      },
+    },
+  ]);
+
+  return {
+    shares: sharesWithProfiles,
+    currentPage: page,
+    totalPages: Math.ceil(post.sharesCount / limit),
+    totalSharesCount: post.sharesCount,
+  };
 };
 
 const sharePostService = async ({ userId, sharedPostId, content = '', taggedUsersIds = [] }) => {
@@ -473,7 +582,7 @@ const deletePostService = async (postId, userId) => {
 
   // ✅ Verify authorization (author or admin)
   const user = await User.findById(userId);
-  const isAuthor = post.author._id.toString() === userId;
+  const isAuthor = post.author._id.toString() === userId.toString();
   const isAdmin = user?.isAdmin;
 
   if (!isAuthor && !isAdmin) {

@@ -8,6 +8,10 @@ const PostSchema = new mongoose.Schema(
       ref: 'User',
       required: true,
     },
+    refProfile: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Profile',
+    },
     content: {
       type: String,
       trim: true,
@@ -161,4 +165,4 @@ const validateEditPost = (data) => {
 
   return schema.validate(data);
 };
-export  { postModel, validateCreatePost, validateEditPost };
+export { postModel, validateCreatePost, validateEditPost };
