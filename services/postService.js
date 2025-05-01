@@ -659,6 +659,51 @@ const searchPostsByKeywordService = async (keyword) => {
   return posts;
 };
 
+
+const getPostsByUserService = async (userId) => {
+  // Check if the user exists
+  // ✅ Validate ObjectIds before querying the database (keeping your function)
+  if (!areValidObjectIds([userId])) {
+    const error = new Error('User not found');
+    error.statusCode = 404;
+    throw error;
+  }
+  const userExists = await User.findById(userId);
+  if (!userExists) {
+    const error = new Error('User not found');
+    error.statusCode = 404;
+    throw error;
+  }
+  const posts = await Post.find({ author: userId })
+    .populate('author', 'name')
+    .populate('refProfile', 'name profilePicture bio')
+    .populate('taggedUsers', 'name')
+    .populate({
+      path: 'sharedPost',
+      select: '-reportedBy',
+      populate: [
+        {
+          path: 'author',
+          select: 'name',
+        },
+        {
+          path: 'refProfile',
+          select: 'name profilePicture',
+        },
+      ],
+    })
+    .sort({ createdAt: -1 }) // Sort by newest first
+    .lean();
+
+  if (!posts || posts.length === 0) {
+    const error = new Error('No posts found for this user');
+    error.statusCode = 404;
+    throw error;
+  }
+
+  return posts;
+};
+
 export {
   createPostService,
   getSinglePostService,
@@ -674,4 +719,5 @@ export {
   getFeedService,
   deletePostService,
   searchPostsByKeywordService,
+  getPostsByUserService
 };

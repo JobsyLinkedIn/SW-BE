@@ -26,6 +26,7 @@ import {
   getFeedService,
   deletePostService,
   searchPostsByKeywordService,
+  getPostsByUserService
 } from '../services/postService.js';
 import { uploadMediaService } from '../services/uploadFiles/uploadFileServices.js';
 
@@ -48,6 +49,22 @@ const createPostCtrl = asyncHandler(async (req, res) => {
   res.status(201).json({ message: 'Post created successfully', post });
 });
 
+
+const getCurrentUserPosts = async (req, res, next) => {
+  try {
+    const currentUserId = req.user._id; // Assuming user is authenticated and ID is available
+    
+    const posts = await getPostsByUserService(currentUserId);
+    
+    res.status(200).json({
+      success: true,
+      userPosts: posts,
+      message: 'Current user posts retrieved successfully'
+    });
+  } catch (error) {
+    next(error); // Pass to error handling middleware
+  }
+};
 /**-------------------------------------------------------
  *
  * @desc     Get Single Post
@@ -354,4 +371,5 @@ export {
   deletePostCtrl,
   searchPostsCtrl,
   uploadMediaCtrl,
+  getCurrentUserPosts
 };

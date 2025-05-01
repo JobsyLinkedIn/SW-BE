@@ -15,6 +15,7 @@ import {
   deletePostCtrl,
   searchPostsCtrl,
   uploadMediaCtrl,
+  getCurrentUserPosts
 } from '../controllers/postsController.js';
 const router = express.Router();
 import uploadByMulter from '../middlewares/multer/multer.js';
@@ -29,12 +30,15 @@ router
   .post(authenticateUser, uploadByMulter.array('media'), cloudinaryUploadFiles, createPostCtrl);
 // Search posts by keyword
 router.get('/search', authenticateUser, searchPostsCtrl);
-// api/posts/:postId
+
+// GET /api//my-posts
+router.get('/my-posts',authenticateUser,getCurrentUserPosts)
 
 // POST /api/posts/upload
 router
   .route('/upload')
   .post(authenticateUser, uploadByMulter.array('media'), cloudinaryUploadFiles, uploadMediaCtrl);
+// api/posts/:postId
 router
   .route('/:postId')
   .get(authenticateUser, checkBlocked, getSinglePostCtrl)
