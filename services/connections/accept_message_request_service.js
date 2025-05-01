@@ -14,7 +14,7 @@ const acceptMessageRequest = async (requestId, currentUserId) => {
 
   // Check if a conversation already exists between the users
   let conversation = await Conversation.findOne({
-    participants: { $all: [request.from, request.to] }
+    participants: { $all: [request.from, request.to] },
   });
 
   // If no conversation exists, create a new one
@@ -27,7 +27,7 @@ const acceptMessageRequest = async (requestId, currentUserId) => {
 
   // Create the new message using the conversationId
   const newMessage = await Message.create({
-    conversationId: conversation._id,  // Use the conversationId
+    conversationId: conversation._id, // Use the conversationId
     sender: request.from,
     receiver: request.to,
     content: request.content,
@@ -42,6 +42,7 @@ const acceptMessageRequest = async (requestId, currentUserId) => {
   if (!request.isBlocked) {
     await Conversation.findByIdAndUpdate(conversation._id, {
       lastUnblockedMessage: newMessage._id,
+      lastMessage: newMessage._id,
     });
   }
 

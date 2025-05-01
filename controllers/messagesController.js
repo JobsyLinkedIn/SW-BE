@@ -42,7 +42,7 @@ const GetAllUserConversation = async (req, res) => {
       numberOfConversations: conversations.length,
     });
   } catch (error) {
-    res.status(500).json({
+    res.status(error.statusCode || 500).json({
       success: false,
       error: error.message,
     });
@@ -78,7 +78,7 @@ const getUnreadMessagesCountCtrl = asyncHandler(async (req, res) => {
     const result = await getUnreadCountService(req.user._id);
     res.json(result);
   } catch (error) {
-    res.status(400).json({ error: error.message });
+    res.status(error.statusCode || 400).json({ error: error.message });
   }
 });
 
@@ -94,7 +94,7 @@ const startNewConversationCtrl = asyncHandler(async (req, res) => {
     );
     res.status(201).json(result);
   } catch (error) {
-    res.status(400).json({ error: error.message });
+    res.status(error.statusCode || 400).json({ error: error.message });
   }
 });
 

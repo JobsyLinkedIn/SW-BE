@@ -2,12 +2,14 @@ import { Conversation } from '../models/conversation.js';
 import { Message } from '../models/message.js';
 import User from '../models/user.js';
 import { areValidObjectIds } from '../utils/validateDB.js';
+import get_connections_service from './connections/get_list_of_connections_service.js';
+import get_message_requests from './connections/get_all_message_request_service.js';
 
 const getAllUserConversations = async (userId) => {
   // Validate user exists
   const userExists = areValidObjectIds([userId]) && (await User.exists({ _id: userId }));
   if (!userExists) {
-    throw new Error('User not found');
+    throw { statusCode: 404, message: 'User not found' };
   }
 
   // Get conversations with last message and participant details
@@ -38,10 +40,10 @@ const getAllUserConversations = async (userId) => {
 const getConversationHistoryService = async (userId, conversationId, page = 1, limit = 20) => {
   // Validate inputs
   if (!areValidObjectIds([userId])) {
-    throw new Error('User Not Found');
+    throw { statusCode: 404, message: 'User not found' };
   }
   if (!areValidObjectIds([conversationId])) {
-    throw new Error('Conversation Not Found');
+    throw { statusCode: 404, message: 'Conversation Not Found' };
   }
   // Verify user is a conversation participant
   const conversation = await Conversation.findOne({
@@ -49,7 +51,7 @@ const getConversationHistoryService = async (userId, conversationId, page = 1, l
     participants: userId,
   });
   if (!conversation) {
-    throw new Error('Conversation not found or access denied');
+    throw { statusCode: 404, message: 'Conversation not found or access denied' };
   }
 
   // Calculate pagination
@@ -102,7 +104,7 @@ const getConversationHistoryService = async (userId, conversationId, page = 1, l
 const getUnreadCountService = async (userId) => {
   // Validate user exists
   if (!areValidObjectIds([userId])) {
-    throw new Error('Invalid user ID');
+    throw { statusCode: 404, message: 'User not found' };
   }
 
   // Get all conversations where user is a participant
@@ -131,7 +133,25 @@ const startConversationWithFirstMessage = async (
 ) => {
   // Validate participants
   if (!areValidObjectIds([senderId, receiverId])) {
-    throw new Error('Invalid participant IDs');
+    throw { statusCode: 400, message: 'Invalid participant IDs' };
+  }
+  //Ensure that the sender is allowed to message this user
+  //(messaging is allowed if the sender is from the connections)
+  const receiver = await User.findOne({ _id: receiverId });
+  const receiverEmail = receiver.email;
+  const receiverConnectionList = (await get_connections_service(receiverEmail))?.connections;
+  // Convert to string for comparison if needed
+  const isSenderInReceiverConnections = receiverConnectionList.some(
+    (conn) => conn._id.toString() === senderId.toString()
+  );
+  if (!isSenderInReceiverConnections) {
+    throw {
+      statusCode: 403,
+      message:
+        'You cannot start a conversation with this user.' +
+        'You must be in their connections to send messages. ' +
+        'Please send a connection request first.',
+    };
   }
 
   // Check if conversation already exists
