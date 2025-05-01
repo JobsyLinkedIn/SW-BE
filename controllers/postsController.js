@@ -29,6 +29,7 @@ import {
   getPostsByUserService
 } from '../services/postService.js';
 import { uploadMediaService } from '../services/uploadFiles/uploadFileServices.js';
+import { IsSavedPostService} from "../services/userActionsServices.js"
 
 /**-------------------------------------------------------
  *
@@ -82,12 +83,13 @@ const getCurrentUserPosts = async (req, res, next) => {
  *-------------------------------------------------------*/
 const getSinglePostCtrl = asyncHandler(async (req, res) => {
   const postId = req.params.postId;
+  const userId = req?.user?._id ?? null;
   // Validate ObjectId format
   if (!mongoose.Types.ObjectId.isValid(postId)) {
     return res.status(400).json({ message: 'Invalid Post ID' });
   }
   // Call service function
-  const post = await getSinglePostService(postId);
+  const post = await getSinglePostService(postId,userId);
   res.status(200).json(post);
 });
 /**-------------------------------------------------------
@@ -385,6 +387,35 @@ const uploadMediaCtrl = asyncHandler(async (req, res) => {
 
   res.status(201).json({ message: 'The files have been uploaded successfully', uploadMediaData });
 });
+
+
+const isSavedPostCtrl = async (req, res, next) => {
+  try {
+    // Get IDs - supports both params and body
+    const userId = req.user._id
+    const postId = req.params.postId || req.body.postId;
+
+    if (!userId || !postId) {
+      const error = new Error('User ID and Post ID are required');
+      error.statusCode = 400;
+      throw error;
+    }
+
+    const isSaved = await IsSavedPostService(userId, postId);
+
+    res.status(200).json({
+      isSaved:isSaved,
+      message: isSaved 
+        ? 'Post is saved by the user' 
+        : 'Post is not saved by the user'
+    });
+
+  } catch (error) {
+    // Ensure statusCode exists
+    error.statusCode = error.statusCode || 500;
+    next(error);
+  }
+};
 export {
   createPostCtrl,
   getSinglePostCtrl,
@@ -402,5 +433,6 @@ export {
   searchPostsCtrl,
   uploadMediaCtrl,
   getCurrentUserPosts,
-  getUserPostsByIdCtrl
+  getUserPostsByIdCtrl,
+  isSavedPostCtrl
 };

@@ -16,7 +16,8 @@ import {
   searchPostsCtrl,
   uploadMediaCtrl,
   getCurrentUserPosts,
-  getUserPostsByIdCtrl
+  getUserPostsByIdCtrl,
+  isSavedPostCtrl
 } from '../controllers/postsController.js';
 const router = express.Router();
 import uploadByMulter from '../middlewares/multer/multer.js';
@@ -73,5 +74,8 @@ router
 
 // Route to fetch users who make share to  a specific post with pagination
 router.route('/:postId/shares').get(getPostSharesCtrl).post(authenticateUser, sharePostCtrl);
+
+// GET /api/posts/:postId/is-saved
+router.get('/:postId/is-saved',authenticateUser,isSavedPostCtrl)
 
 export default router;

@@ -77,4 +77,24 @@ const getSavedPostsService = async (userId, page = 1, limit = 10) => {
   return userDetails?.savedPosts || [];
 };
 
-export { savePostService, unsavePostService, getSavedPostsService };
+const IsSavedPostService = async (userId, postId) => {
+  if (!areValidObjectIds([userId, postId])) {
+    const error = new Error('Invalid ID(s)');
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const userDetails = await UserDetails.findOne({ user: userId });
+  
+  if (!userDetails) {
+    const error = new Error('User not found');
+    error.statusCode = 404;
+    throw error;
+  }
+
+  // Check if postId exists in savedPosts array
+  return userDetails.savedPosts.some(savedPost => 
+    savedPost.toString() === postId.toString()
+  );
+};
+export { savePostService, unsavePostService, getSavedPostsService ,IsSavedPostService};

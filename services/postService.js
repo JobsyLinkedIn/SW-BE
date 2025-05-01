@@ -48,7 +48,45 @@ const createPostService = async ({
   return post;
 };
 
-const getSinglePostService = async (postId) => {
+/**
+ * Check if a user has liked a specific post
+ * @param {string} userId - The ID of the user
+ * @param {string} postId - The ID of the post
+ * @returns {Promise<boolean>} - `true` if liked, `false` otherwise
+ * @throws {Error} - If IDs are invalid or user/post not found
+ */
+const isLikedPostService = async (userId, postId) => {
+  if(!userId){
+    return false
+  }
+  // Validate IDs
+  if (!mongoose.Types.ObjectId.isValid(userId) || !mongoose.Types.ObjectId.isValid(postId)) {
+    const error = new Error('Invalid user ID or post ID');
+    error.statusCode = 400;
+    throw error;
+  }
+
+  // Check if user exists
+  const user = await User.findById(userId);
+  if (!user) {
+    const error = new Error('User not found');
+    error.statusCode = 404;
+    throw error;
+  }
+
+  // Check if post exists (optional but recommended)
+  const post = await Post.findById(postId);
+  if (!post) {
+    const error = new Error('Post not found');
+    error.statusCode = 404;
+    throw error;
+  }
+
+  // Check if user's ID exists in post's `likes` array
+  return post.likes.some(like => like.toString() === userId.toString());
+};
+
+const getSinglePostService = async (postId,userId) => {
   const post = await Post.findById(postId)
     .populate('author', 'name')
     .populate('refProfile', 'name profilePicture bio')
@@ -75,7 +113,14 @@ const getSinglePostService = async (postId) => {
     error.statusCode = 404;
     throw error;
   }
-  return post;
+  // Only check if post is liked if userId is provided
+  const isLiked = userId ? await isLikedPostService(userId, postId) : false;
+
+  // Return post with isLiked added
+  return {
+    ...post,
+    isLiked,
+  }
 };
 
 /**
@@ -127,13 +172,21 @@ const getFeedService = async (userId, page = 1, limit = 10) => {
     })
     .sort({ createdAt: -1 }) // Latest posts first
     .skip(skip)
-    .limit(limit);
+    .limit(limit).lean();
+
+     // Add isLiked status to each post using isLikedPostService
+  const postsWithLikes = await Promise.all(
+    feedPosts.map(async (post) => {
+      const isLiked = userId ? await isLikedPostService(userId, post._id) : false;
+      return { ...post, isLiked };
+    })
+  );
 
   // Get total count for pagination metadata
   const totalPosts = await Post.countDocuments({ author: { $in: usersWhosePostsAreTargeted } });
 
   return {
-    posts: feedPosts,
+    posts: postsWithLikes,
     currentPage: page,
     totalPages: Math.ceil(totalPosts / limit),
     totalPosts,
@@ -469,6 +522,7 @@ const getPostLikesService = async (postId, page = 1, limit = 10) => {
   };
 };
 
+
 const getPostSharesService = async (postId, page = 1, limit = 10) => {
   // ✅ 1. Validate postId
   if (!postId || !mongoose.Types.ObjectId.isValid(postId)) {
@@ -660,20 +714,22 @@ const searchPostsByKeywordService = async (keyword) => {
 };
 
 
-const getPostsByUserService = async (userId) => {
+const getPostsByUserService = async (userId, requestingUserId) => {
   // Check if the user exists
-  // ✅ Validate ObjectIds before querying the database (keeping your function)
   if (!areValidObjectIds([userId])) {
     const error = new Error('User not found');
     error.statusCode = 404;
     throw error;
   }
+
   const userExists = await User.findById(userId);
   if (!userExists) {
     const error = new Error('User not found');
     error.statusCode = 404;
     throw error;
   }
+
+  // Fetch all posts by the user
   const posts = await Post.find({ author: userId })
     .populate('author', 'name')
     .populate('refProfile', 'name profilePicture bio')
@@ -682,17 +738,11 @@ const getPostsByUserService = async (userId) => {
       path: 'sharedPost',
       select: '-reportedBy',
       populate: [
-        {
-          path: 'author',
-          select: 'name',
-        },
-        {
-          path: 'refProfile',
-          select: 'name profilePicture',
-        },
+        { path: 'author', select: 'name' },
+        { path: 'refProfile', select: 'name profilePicture' },
       ],
     })
-    .sort({ createdAt: -1 }) // Sort by newest first
+    .sort({ createdAt: -1 })
     .lean();
 
   if (!posts || posts.length === 0) {
@@ -701,8 +751,19 @@ const getPostsByUserService = async (userId) => {
     throw error;
   }
 
-  return posts;
+  // Add isLiked status to each post
+  const postsWithLikes = await Promise.all(
+    posts.map(async (post) => {
+      const isLiked = requestingUserId 
+        ? await isLikedPostService(requestingUserId, post._id) 
+        : false;
+      return { ...post, isLiked };
+    })
+  );
+
+  return postsWithLikes;
 };
+
 
 export {
   createPostService,
@@ -719,5 +780,6 @@ export {
   getFeedService,
   deletePostService,
   searchPostsByKeywordService,
-  getPostsByUserService
+  getPostsByUserService,
+  isLikedPostService
 };
