@@ -144,29 +144,25 @@ const editPostService = async (
   postId,
   { content, taggedUsersIds = [], links = [], UploadedFiles = [], userId }
 ) => {
-  // ✅ Validate Post ObjectId
   if (!areValidObjectIds([postId])) {
-    const error = new Error('Post not found');
-    error.statusCode = 404;
+    const error = new Error('Invalid Post ID');
+    error.statusCode = 400;
     throw error;
   }
-  // Ensure post exists
-  const post = await Post.findById(postId).populate('taggedUsers', 'name');
+
+  const post = await Post.findById(postId);
   if (!post) {
     const error = new Error('Post not found');
     error.statusCode = 404;
     throw error;
   }
 
-  // Ensure only author can edit
   if (post.author.toString() !== userId.toString()) {
     const error = new Error('You are not authorized to edit this post');
-    error.statusCode = 403; // Forbidden
-    error.code = 'UNAUTHORIZED_ACCESS';
+    error.statusCode = 403;
     throw error;
   }
 
-  // Validate input data
   const { error } = validateEditPost({ content, taggedUsersIds, links });
   if (error) {
     const err = new Error(error.details[0].message);
@@ -174,39 +170,49 @@ const editPostService = async (
     throw err;
   }
 
-  // Validate tagged users exist
+  // ✅ Ensure all tagged users exist
   if (taggedUsersIds.length > 0) {
-    const validUsersCount = await User.countDocuments({ _id: { $in: taggedUsersIds } });
-    if (validUsersCount !== taggedUsersIds.length) {
-      const error = new Error('One or more tagged users do not exist');
+    const validUsers = await User.countDocuments({ _id: { $in: taggedUsersIds } });
+    if (validUsers !== taggedUsersIds.length) {
+      const error = new Error('Some tagged users do not exist');
       error.statusCode = 400;
       throw error;
     }
   }
-  //Handle editing Images,Video Uploaded in the Post
-  //delete post uploaded files (images,videos) from Cloundinary
-  for (let file of post.media) {
+
+  // ✅ Determine which old files should be deleted
+  const oldMedia = post.media || [];
+  const newPublicIds = UploadedFiles.map((f) => f.public_id);
+  const filesToDelete = oldMedia.filter((f) => !newPublicIds.includes(f.publicId));
+
+  for (let file of filesToDelete) {
     if (file.publicId) {
       try {
         await deleteFileFromCloudinary(file.publicId);
       } catch (error) {
-        throw error;
+        console.error(`Failed to delete ${file.publicId}`, error);
       }
     }
   }
-  // ✅ Get Uploaded Media (images,video) In the Post
-  let media = [];
-  if (UploadedFiles.length !== 0) {
-    media = UploadedFiles.map((file) => ({
-      publicId: file.public_id,
-      url: file.secure_url,
-      type: file.resource_type,
-    }));
-  }
-  // Update post
+
+  // ✅ Format new media
+  const newMedia = UploadedFiles.map((file) => ({
+    publicId: file.publicId,
+    url: file.url,
+    type: file.type,
+  }));
+
+  // ✅ Update post
   const updatedPost = await Post.findByIdAndUpdate(
     postId,
-    { $set: { content, taggedUsers: taggedUsersIds, links, media } },
+    {
+      $set: {
+        content,
+        taggedUsers: taggedUsersIds,
+        links,
+        media: newMedia,
+      },
+    },
     { new: true }
   )
     .populate('author', 'name')
@@ -216,20 +222,14 @@ const editPostService = async (
       path: 'sharedPost',
       select: '-reportedBy',
       populate: [
-        // Array for multiple nested populates
-        {
-          path: 'author', // Populate author inside sharedPost
-          select: 'name', // Fields from User model
-        },
-        {
-          path: 'refProfile',
-          select: 'name profilePicture',
-        },
+        { path: 'author', select: 'name' },
+        { path: 'refProfile', select: 'name profilePicture' },
       ],
     });
 
   return updatedPost;
 };
+
 const likePostService = async (postId, userId) => {
   // ✅ Check if the post exists
   const post = await Post.findById(postId);

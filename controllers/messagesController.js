@@ -1,11 +1,12 @@
 import asyncHandler from 'express-async-handler';
 import {
-  uploadMediaService,
   getAllUserConversations,
   getConversationHistoryService,
   getUnreadCountService,
   startConversationWithFirstMessage,
 } from '../services/messagesServices.js';
+
+import { uploadMediaService } from '../services/uploadFiles/uploadFileServices.js';
 
 /**-------------------------------------------------------
  *

@@ -13,13 +13,14 @@ import {
   getPostSharesCtrl,
   sharePostCtrl,
   deletePostCtrl,
-  searchPostsCtrl
+  searchPostsCtrl,
+  uploadMediaCtrl,
 } from '../controllers/postsController.js';
 const router = express.Router();
 import uploadByMulter from '../middlewares/multer/multer.js';
 import authenticateUser from '../middlewares/authenticateUser.js';
 import cloudinaryUploadFiles from '../middlewares/uploadToCloudinary/uploadFilesToCloudinary.js';
-import {checkBlocked} from "../middlewares/checkBlocked.js"
+import { checkBlocked } from '../middlewares/checkBlocked.js';
 
 // api/posts
 router
@@ -27,21 +28,29 @@ router
   .get(authenticateUser, getFeedCtrl)
   .post(authenticateUser, uploadByMulter.array('media'), cloudinaryUploadFiles, createPostCtrl);
 // Search posts by keyword
-router.get('/search', authenticateUser,searchPostsCtrl);
+router.get('/search', authenticateUser, searchPostsCtrl);
 // api/posts/:postId
+
+// POST /api/posts/upload
+router
+  .route('/upload')
+  .post(authenticateUser, uploadByMulter.array('media'), cloudinaryUploadFiles, uploadMediaCtrl);
 router
   .route('/:postId')
-  .get(authenticateUser,checkBlocked,getSinglePostCtrl)
+  .get(authenticateUser, checkBlocked, getSinglePostCtrl)
   .put(authenticateUser, uploadByMulter.array('media'), cloudinaryUploadFiles, editPostCtrl)
   .delete(authenticateUser, deletePostCtrl);
 
 // api/posts/postId/likes
-router.route('/:postId/likes').put(authenticateUser, checkBlocked,likePostCtrl).get(getPostLikesCtrl); // Route to fetch users who make like to  a specific post with pagination
+router
+  .route('/:postId/likes')
+  .put(authenticateUser, checkBlocked, likePostCtrl)
+  .get(getPostLikesCtrl); // Route to fetch users who make like to  a specific post with pagination
 
 // /api/posts/:postId/comments
 router
   .route('/:postId/comments')
-  .post(authenticateUser, checkBlocked,addCommentCtrl) // Add a new comment to a post
+  .post(authenticateUser, checkBlocked, addCommentCtrl) // Add a new comment to a post
   .get(getPostCommentsCtrl); // Get comments of a post
 // api/posts/comment/:commentId
 router
@@ -51,7 +60,5 @@ router
 
 // Route to fetch users who make share to  a specific post with pagination
 router.route('/:postId/shares').get(getPostSharesCtrl).post(authenticateUser, sharePostCtrl);
-
-
 
 export default router;
