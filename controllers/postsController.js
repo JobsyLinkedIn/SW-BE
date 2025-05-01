@@ -27,6 +27,7 @@ import {
   deletePostService,
   searchPostsByKeywordService,
 } from '../services/postService.js';
+import { uploadMediaService } from '../services/uploadFiles/uploadFileServices.js';
 
 /**-------------------------------------------------------
  *
@@ -98,9 +99,8 @@ const editPostCtrl = asyncHandler(async (req, res) => {
 
   // Extract post ID and request body
   const postId = req.params.postId;
-  const UploadedFiles = req.mediaFilesData || [];
 
-  const { content, taggedUsersIds = [], links = [] } = req.body;
+  const { content, taggedUsersIds = [], links = [], UploadedFiles = [] } = req.body;
   const postData = { content, taggedUsersIds, links, UploadedFiles, userId };
 
   // Call service function
@@ -322,6 +322,22 @@ const deletePostCtrl = asyncHandler(async (req, res) => {
   const message = await deletePostService(postId, userId);
   res.status(200).json({ message: message });
 });
+
+/**-------------------------------------------------------
+ *
+ * @desc    Upload Media In The message
+ * @route   /api/posts/upload
+ * @method   POST
+ * @access   Private [Only Logged in user]
+ *
+ *-------------------------------------------------------*/
+const uploadMediaCtrl = asyncHandler(async (req, res) => {
+  const UploadedFiles = req.mediaFilesData || [];
+
+  const uploadMediaData = uploadMediaService(UploadedFiles);
+
+  res.status(201).json({ message: 'The files have been uploaded successfully', uploadMediaData });
+});
 export {
   createPostCtrl,
   getSinglePostCtrl,
@@ -337,4 +353,5 @@ export {
   sharePostCtrl,
   deletePostCtrl,
   searchPostsCtrl,
+  uploadMediaCtrl,
 };
