@@ -49,7 +49,14 @@ const createPostCtrl = asyncHandler(async (req, res) => {
   res.status(201).json({ message: 'Post created successfully', post });
 });
 
-
+/**-------------------------------------------------------
+ *
+ * @desc     Get Current User Posts
+ * @route   /api/posts/my-posts
+ * @method   GET
+ * @access   Private [Only Logged in user]
+ *
+ *-------------------------------------------------------*/
 const getCurrentUserPosts = async (req, res, next) => {
   try {
     const currentUserId = req.user._id; // Assuming user is authenticated and ID is available
@@ -83,6 +90,29 @@ const getSinglePostCtrl = asyncHandler(async (req, res) => {
   const post = await getSinglePostService(postId);
   res.status(200).json(post);
 });
+/**-------------------------------------------------------
+ *
+ * @desc     Get User Posts
+ * @route   /api/posts/user-posts/:userId
+ * @method   GET
+ * @access   Private [Only Logged in user]
+ *
+ *-------------------------------------------------------*/
+const getUserPostsByIdCtrl = async (req, res, next) => {
+  try {
+    const userId = req.params.userId; // Get user ID from route params
+    
+    const posts = await getPostsByUserService(userId);
+    
+    res.status(200).json({
+      success: true,
+      userPosts: posts,
+      message: 'User posts retrieved successfully'
+    });
+  } catch (error) {
+    next(error); // Pass to error handling middleware
+  }
+};
 
 /**
  * @desc     Get Feed Posts
@@ -371,5 +401,6 @@ export {
   deletePostCtrl,
   searchPostsCtrl,
   uploadMediaCtrl,
-  getCurrentUserPosts
+  getCurrentUserPosts,
+  getUserPostsByIdCtrl
 };
