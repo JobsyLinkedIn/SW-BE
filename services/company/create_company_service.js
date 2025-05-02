@@ -1,5 +1,5 @@
 import Company from '../../models/company.js'
-
+import User from '../../models/user.js';
 export const createCompany = async (companyData, userId) => {
   const { name, industry, location, logo, description } = companyData;
 
@@ -18,6 +18,11 @@ export const createCompany = async (companyData, userId) => {
     });
 
     await newCompany.save();
+
+    await User.findByIdAndUpdate(userId, {
+      $push: { companyOwned: newCompany._id },
+    });
+
     return newCompany;
   } catch (err) {
     throw new Error('Error saving company to database.');

@@ -10,6 +10,7 @@ const router = express.Router();
 router.post('/company', authenticateUser, company_controller.createCompanyController);
 router.put('/company/:companyId', authenticateUser,authorizeCompanyUser,company_controller.updateCompanyDetails);
 router.post('/job/:companyId', authenticateUser,authorizeCompanyUser ,company_controller.createJobController);
+router.get('/company/has', authenticateUser, company_controller.getOwnedCompaniesController);
 router.get('/company/:companyId/applications', authenticateUser,company_controller.fetchJobApplications);
 router.get('/company/:companyId/analytics', authenticateUser, authorizeCompanyUser,company_controller.fetchJobAnalytics);
 router.delete('/:companyId/followers/:userId',authenticateUser ,company_controller.removeFollowerController);

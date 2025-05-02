@@ -36,6 +36,11 @@ const userSchema = new mongoose.Schema({
     enum: ['everyone',  'no-one'],
     default: 'everyone',
   },
+  companyOwned: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Company',
+    default: [],
+  }],  
   connections: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User', default: [] }],
   pendingRequests: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User', default: [] }],
   appliedJobs: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Job' }],

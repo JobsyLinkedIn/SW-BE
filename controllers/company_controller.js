@@ -11,6 +11,8 @@ import getCompanyFollowersCountService from '../services/company/get_followers_s
 import { getCompanyFollowersService } from '../services/company/get_attributes_follower_service.js'; 
 import checkIfUserFollowsCompany from "../services/company/check_if_following_service.js";
 import Company from "../models/company.js";
+import getCompaniesOwnedByUser from '../services/company/get_companies_owned_service.js'; 
+
 
 export const createCompanyController = async (req, res) => {
   try {
@@ -189,6 +191,19 @@ export const isUserFollowingCompany = async (req, res) => {
     }
     console.error('Error in isUserFollowingCompany:', error);
     return res.status(500).json({ message: 'Internal server error' });
+  }
+};
+
+
+
+export const getOwnedCompaniesController = async (req, res) => {
+  const userId = req.user._id;
+  console.log("debug",userId);
+  try {
+    const companies = await getCompaniesOwnedByUser(userId);
+    res.status(200).json(companies);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 };
 
