@@ -31,6 +31,7 @@ import {
 } from './sockets/socketEventsHandlers.js';
 import messagesRoutes from './routes/messagesRoutes.js';
 import conversationRoutes from './routes/conversationRoutes.js';
+import commentsRoutes from './routes/commentsRoutes.js';
 import e from 'cors';
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -127,6 +128,7 @@ app.use('/api/report', reportRoutes); // Report routes
 app.use('/api/jobs', jobroutes); // Job routes
 app.use('/api/messages', messagesRoutes); //messages routes
 app.use('/api/conversation', conversationRoutes); //conversation routes
+app.use('/api/comments', commentsRoutes);
 
 // 🔴 Place this at the end (AFTER routes)
 app.use(errorHandler);
