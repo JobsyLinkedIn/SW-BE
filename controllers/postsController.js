@@ -17,7 +17,6 @@ import {
   editPostService,
   likePostService,
   addCommentService,
-  deleteCommentService,
   editCommentService,
   getPostCommentsService,
   getPostLikesService,
@@ -26,10 +25,10 @@ import {
   getFeedService,
   deletePostService,
   searchPostsByKeywordService,
-  getPostsByUserService
+  getPostsByUserService,
 } from '../services/postService.js';
 import { uploadMediaService } from '../services/uploadFiles/uploadFileServices.js';
-import { IsSavedPostService} from "../services/userActionsServices.js"
+import { IsSavedPostService } from '../services/userActionsServices.js';
 
 /**-------------------------------------------------------
  *
@@ -61,13 +60,13 @@ const createPostCtrl = asyncHandler(async (req, res) => {
 const getCurrentUserPosts = async (req, res, next) => {
   try {
     const currentUserId = req.user._id; // Assuming user is authenticated and ID is available
-    
+
     const posts = await getPostsByUserService(currentUserId);
-    
+
     res.status(200).json({
       success: true,
       userPosts: posts,
-      message: 'Current user posts retrieved successfully'
+      message: 'Current user posts retrieved successfully',
     });
   } catch (error) {
     next(error); // Pass to error handling middleware
@@ -89,7 +88,7 @@ const getSinglePostCtrl = asyncHandler(async (req, res) => {
     return res.status(400).json({ message: 'Invalid Post ID' });
   }
   // Call service function
-  const post = await getSinglePostService(postId,userId);
+  const post = await getSinglePostService(postId, userId);
   res.status(200).json(post);
 });
 /**-------------------------------------------------------
@@ -103,13 +102,13 @@ const getSinglePostCtrl = asyncHandler(async (req, res) => {
 const getUserPostsByIdCtrl = async (req, res, next) => {
   try {
     const userId = req.params.userId; // Get user ID from route params
-    
+
     const posts = await getPostsByUserService(userId);
-    
+
     res.status(200).json({
       success: true,
       userPosts: posts,
-      message: 'User posts retrieved successfully'
+      message: 'User posts retrieved successfully',
     });
   } catch (error) {
     next(error); // Pass to error handling middleware
@@ -205,6 +204,7 @@ const addCommentCtrl = asyncHandler(async (req, res) => {
  * @access   Private [Only Comment Writer]
  *
  *-------------------------------------------------------*/
+/*
 const deleteCommentCtrl = asyncHandler(async (req, res) => {
   const commentId = req.params.commentId;
   const userId = req.user._id;
@@ -213,6 +213,7 @@ const deleteCommentCtrl = asyncHandler(async (req, res) => {
 
   res.status(200).json({ message: 'Comment deleted successfully' });
 });
+*/
 
 /**-------------------------------------------------------
  *
@@ -246,6 +247,7 @@ const editCommentCtrl = asyncHandler(async (req, res) => {
 
 const getPostCommentsCtrl = asyncHandler(async (req, res) => {
   const postId = req.params.postId;
+  const userId = req?.user?._id ?? null;
   let { page = 1, limit = 10 } = req.query;
 
   // Convert to numbers
@@ -253,9 +255,9 @@ const getPostCommentsCtrl = asyncHandler(async (req, res) => {
   limit = parseInt(limit);
 
   // ✅ Call Service
-  const { totalComments, totalPages, comments } = await getPostCommentsService(postId, page, limit);
+  const Comments = await getPostCommentsService(postId, userId);
 
-  res.status(200).json({ totalComments, page, totalPages, comments });
+  res.status(200).json(Comments);
 });
 
 /**
@@ -369,7 +371,7 @@ const deletePostCtrl = asyncHandler(async (req, res) => {
   const userId = req.user._id;
   const postId = req.params.postId;
   const message = await deletePostService(postId, userId);
-  res.status(200).json({ message: message });
+  res.status(200).json({ message });
 });
 
 /**-------------------------------------------------------
@@ -388,11 +390,10 @@ const uploadMediaCtrl = asyncHandler(async (req, res) => {
   res.status(201).json({ message: 'The files have been uploaded successfully', uploadMediaData });
 });
 
-
 const isSavedPostCtrl = async (req, res, next) => {
   try {
     // Get IDs - supports both params and body
-    const userId = req.user._id
+    const userId = req.user._id;
     const postId = req.params.postId || req.body.postId;
 
     if (!userId || !postId) {
@@ -404,12 +405,9 @@ const isSavedPostCtrl = async (req, res, next) => {
     const isSaved = await IsSavedPostService(userId, postId);
 
     res.status(200).json({
-      isSaved:isSaved,
-      message: isSaved 
-        ? 'Post is saved by the user' 
-        : 'Post is not saved by the user'
+      isSaved: isSaved,
+      message: isSaved ? 'Post is saved by the user' : 'Post is not saved by the user',
     });
-
   } catch (error) {
     // Ensure statusCode exists
     error.statusCode = error.statusCode || 500;
@@ -423,7 +421,6 @@ export {
   editPostCtrl,
   likePostCtrl,
   addCommentCtrl,
-  deleteCommentCtrl,
   editCommentCtrl,
   getPostCommentsCtrl,
   getPostLikesCtrl,
@@ -434,5 +431,5 @@ export {
   uploadMediaCtrl,
   getCurrentUserPosts,
   getUserPostsByIdCtrl,
-  isSavedPostCtrl
+  isSavedPostCtrl,
 };

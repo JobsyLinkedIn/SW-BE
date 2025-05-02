@@ -49,7 +49,9 @@ const CommentSchema = new mongoose.Schema(
         ref: 'User',
       },
     ],
+    likesCount: { type: Number, default: 0 },
   },
+
   { timestamps: true }
 );
 

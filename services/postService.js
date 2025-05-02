@@ -8,6 +8,7 @@ import Profile from '..//models/profileModel.js';
 import { getUserIdFromToken } from '../utils/auth.js';
 import { validateDocumentsExistence, areValidObjectIds } from '../utils/validateDB.js';
 import deleteFileFromCloudinary from '../utils/cloudinaryHelpers.js';
+import { deleteCommentService } from './commentsServices.js';
 
 const createPostService = async ({
   userId,
@@ -55,13 +56,13 @@ const createPostService = async ({
  * @returns {Promise<boolean>} - `true` if liked, `false` otherwise
  * @throws {Error} - If IDs are invalid or user/post not found
  */
-const isLikedPostService = async (userId, postId) => {
-  if(!userId){
-    return false
+const isLikedService = async (userId, objectId, objectModel = 'Post') => {
+  if (!userId) {
+    return false;
   }
   // Validate IDs
-  if (!mongoose.Types.ObjectId.isValid(userId) || !mongoose.Types.ObjectId.isValid(postId)) {
-    const error = new Error('Invalid user ID or post ID');
+  if (!mongoose.Types.ObjectId.isValid(userId) || !mongoose.Types.ObjectId.isValid(objectId)) {
+    const error = new Error('Invalid ID');
     error.statusCode = 400;
     throw error;
   }
@@ -73,20 +74,24 @@ const isLikedPostService = async (userId, postId) => {
     error.statusCode = 404;
     throw error;
   }
-
-  // Check if post exists (optional but recommended)
-  const post = await Post.findById(postId);
-  if (!post) {
+  let objectDoc = null;
+  if (objectModel === 'Post') {
+    // Check if post exists (optional but recommended)
+    objectDoc = await Post.findById(objectId);
+  } else if (objectModel === 'Comment') {
+    objectDoc = await Comment.findById(objectId);
+  }
+  if (!objectDoc) {
     const error = new Error('Post not found');
     error.statusCode = 404;
     throw error;
   }
 
   // Check if user's ID exists in post's `likes` array
-  return post.likes.some(like => like.toString() === userId.toString());
+  return objectDoc.likes.some((like) => like.toString() === userId.toString());
 };
 
-const getSinglePostService = async (postId,userId) => {
+const getSinglePostService = async (postId, userId) => {
   const post = await Post.findById(postId)
     .populate('author', 'name')
     .populate('refProfile', 'name profilePicture bio')
@@ -114,13 +119,13 @@ const getSinglePostService = async (postId,userId) => {
     throw error;
   }
   // Only check if post is liked if userId is provided
-  const isLiked = userId ? await isLikedPostService(userId, postId) : false;
+  const isLiked = userId ? await isLikedService(userId, postId) : false;
 
   // Return post with isLiked added
   return {
     ...post,
     isLiked,
-  }
+  };
 };
 
 /**
@@ -172,12 +177,13 @@ const getFeedService = async (userId, page = 1, limit = 10) => {
     })
     .sort({ createdAt: -1 }) // Latest posts first
     .skip(skip)
-    .limit(limit).lean();
+    .limit(limit)
+    .lean();
 
-     // Add isLiked status to each post using isLikedPostService
+  // Add isLiked status to each post using isLikedService
   const postsWithLikes = await Promise.all(
     feedPosts.map(async (post) => {
-      const isLiked = userId ? await isLikedPostService(userId, post._id) : false;
+      const isLiked = userId ? await isLikedService(userId, post._id) : false;
       return { ...post, isLiked };
     })
   );
@@ -371,6 +377,7 @@ const addCommentService = async ({ postId, userId, content = null, taggedUsersId
   return comment;
 };
 
+/*
 const deleteCommentService = async (commentId, userId) => {
   // ✅ Validate ObjectIds before querying the database (keeping your function)
   if (!areValidObjectIds([commentId, userId])) {
@@ -405,6 +412,7 @@ const deleteCommentService = async (commentId, userId) => {
     $inc: { commentsCount: -1 },
   });
 };
+*/
 
 const editCommentService = async (commentId, { content, taggedUsersIds = [], userId }) => {
   // ✅ Validate IDs
@@ -441,7 +449,7 @@ const editCommentService = async (commentId, { content, taggedUsersIds = [], use
 
   return comment;
 };
-
+/*
 const getPostCommentsService = async (postId, page, limit) => {
   // ✅ Validate post ID
   if (!postId || !mongoose.Types.ObjectId.isValid(postId)) {
@@ -467,6 +475,35 @@ const getPostCommentsService = async (postId, page, limit) => {
     .limit(limit);
 
   return { totalComments, totalPages: Math.ceil(totalComments / limit), comments };
+};
+*/
+
+const getPostCommentsService = async (postId, userId = null) => {
+  if (!areValidObjectIds([postId])) {
+    throw new Error('Invalid post ID');
+  }
+
+  // Get only root-level comments (comments not in any reply array)
+  const comments = await Comment.find({
+    post: postId,
+    _id: { $nin: await Comment.distinct('replies') }, // Only comments not referenced as replies
+  })
+    .populate('author', 'username profilePicture')
+    .populate('refProfile', 'displayName')
+    .populate('taggedUsers', 'username')
+    .sort({ createdAt: -1 }) // Newest first
+    .lean();
+
+  // Add isLiked status if user is authenticated
+  if (userId) {
+    await Promise.all(
+      comments.map(async (comment) => {
+        comment.isLiked = await isLikedService(userId, comment._id, 'Comment');
+      })
+    );
+  }
+
+  return comments;
 };
 
 const getPostLikesService = async (postId, page = 1, limit = 10) => {
@@ -521,7 +558,6 @@ const getPostLikesService = async (postId, page = 1, limit = 10) => {
     totalLikesCount: post.likesCount,
   };
 };
-
 
 const getPostSharesService = async (postId, page = 1, limit = 10) => {
   // ✅ 1. Validate postId
@@ -621,7 +657,7 @@ const deletePostService = async (postId, userId) => {
   }
   // ✅ Validate User ObjectId
   if (!areValidObjectIds([userId])) {
-    const error = new Error('User  Not found');
+    const error = new Error('User Not found');
     error.statusCode = 404;
     throw error;
   }
@@ -644,20 +680,27 @@ const deletePostService = async (postId, userId) => {
     error.statusCode = 403;
     throw error;
   }
+
   try {
-    // TODO: Implement data backup for rollback capability
-    // Currently proceeding without rollback safety
+    // Get only root comments (from post.comments array)
+    const rootCommentIds = post.comments;
 
-    // Delete all associated comments
-    await Comment.deleteMany({ post: postId });
+    // Delete each root comment and its replies using your existing service
+    await Promise.all(
+      rootCommentIds.map((commentId) =>
+        deleteCommentService(commentId, userId).catch((e) =>
+          console.error(`Failed to delete comment ${commentId}:`, e)
+        )
+      )
+    );
 
+    // Rest of your original code remains exactly the same:
     // Delete media from Cloudinary if exists
     if (post.media?.length > 0) {
       for (let file of post.media) {
         if (file.publicId) {
           await deleteFileFromCloudinary(file.publicId).catch((e) => {
             console.error(`Failed to delete Cloudinary file ${file.publicId}:`, e);
-            // Continue despite failure
           });
         }
       }
@@ -674,17 +717,9 @@ const deletePostService = async (postId, userId) => {
     // Finally delete the post itself
     await Post.findByIdAndDelete(postId);
 
-    return { message: 'Post deleted successfully' };
+    return 'Post deleted successfully';
   } catch (error) {
     console.error('Post deletion failed:', error);
-
-    // TODO: Implement rollback mechanism here
-    // Currently errors will leave the system in partial state
-    // Need to:
-    // 1. Store operation state before execution
-    // 2. Implement compensation actions
-    // 3. Add admin alerts for manual recovery
-
     const serviceError = new Error('Failed to delete post');
     serviceError.statusCode = 500;
     throw serviceError;
@@ -712,7 +747,6 @@ const searchPostsByKeywordService = async (keyword) => {
 
   return posts;
 };
-
 
 const getPostsByUserService = async (userId, requestingUserId) => {
   // Check if the user exists
@@ -754,9 +788,7 @@ const getPostsByUserService = async (userId, requestingUserId) => {
   // Add isLiked status to each post
   const postsWithLikes = await Promise.all(
     posts.map(async (post) => {
-      const isLiked = requestingUserId 
-        ? await isLikedPostService(requestingUserId, post._id) 
-        : false;
+      const isLiked = requestingUserId ? await isLikedService(requestingUserId, post._id) : false;
       return { ...post, isLiked };
     })
   );
@@ -764,14 +796,12 @@ const getPostsByUserService = async (userId, requestingUserId) => {
   return postsWithLikes;
 };
 
-
 export {
   createPostService,
   getSinglePostService,
   editPostService,
   likePostService,
   addCommentService,
-  deleteCommentService,
   editCommentService,
   getPostCommentsService,
   getPostLikesService,
@@ -781,5 +811,5 @@ export {
   deletePostService,
   searchPostsByKeywordService,
   getPostsByUserService,
-  isLikedPostService
+  isLikedService,
 };
