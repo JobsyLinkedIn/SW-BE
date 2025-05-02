@@ -2,15 +2,23 @@ import UserDetails from "../../models/user_details.js";
 
 export const getBlockedUsers = async (userId) => {
     try {
-        const userDetails = await UserDetails.findOne({ user: userId }).populate('blockedUsers');
-        console.log("debug",userId);
+        const userDetails = await UserDetails
+            .findOne({ user: userId })
+            .populate({
+                path: 'blockedUsers',
+                select: '_id name email' 
+            });
+
+        console.log("debug", userId);
+
         if (!userDetails) {
             throw new Error('User not found');
         }
 
-        return userDetails.blockedUsers; 
+        return userDetails.blockedUsers;
     } catch (error) {
         throw new Error(`Error retrieving blocked users: ${error.message}`);
     }
 };
+
 export default getBlockedUsers;
