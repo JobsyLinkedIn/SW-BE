@@ -120,7 +120,6 @@ const addSkills = async (req, skillsData) => {
   const profile = await Profile.findOne({ userId });
   if (!profile) throw new Error('Profile not found');
 
-  // Validate that skillsData is an array
   if (!Array.isArray(skillsData)) {
     throw new Error('skillsData must be an array');
   }
@@ -141,12 +140,21 @@ const updatePrivacySettings = async (req, privacySettings) => {
 };
 
 const viewUserProfile = async (req) => {
-  const { name } = req.query; // Retrieve the username from query parameters
+  try {
+    const { name } = req.query;
+    if (!name) {
+      throw new Error('The "name" query parameter is required');
+    }
+    const profile = await Profile.findOne({ name }).populate('followers');
+    if (!profile) {
+      throw new Error('Profile not found');
+    }
 
-  const profile = await Profile.findOne({ name }).populate('followers');
-  if (!profile) throw new Error('Profile not found');
-
-  return { profile, message: 'User profile retrieved successfully' };
+    return { profile, message: 'User profile retrieved successfully' };
+  } catch (error) {
+    console.error('Error in viewUserProfile:', error.message);
+    throw new Error(error.message);
+  }
 };
 
 const deleteWorkExperience = async (req, workExperienceId) => {

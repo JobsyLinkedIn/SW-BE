@@ -96,11 +96,15 @@ const updatePrivacySettings = async (req, res) => {
 
 const viewUserProfile = async (req, res) => {
   try {
+    // Call the service function to retrieve the user profile
     const response = await profileService.viewUserProfile(req);
+
+    // Send a successful response
     res.status(200).json(response);
   } catch (error) {
-    console.error(error);
-    res.status(400).json({ msg: error.message });
+    // Log the error and send an appropriate error response
+    console.error('Error in viewUserProfile controller:', error.message);
+    res.status(400).json({ message: error.message });
   }
 };
 

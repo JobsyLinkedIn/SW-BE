@@ -52,9 +52,9 @@ router.delete('/education/:id', deleteEducation);
 router.post('/skills', addSkills);
 router.delete('/skills', deleteSkills); 
 router.put('/privacy', updatePrivacySettings);
-router.get('/user', viewUserProfile); 
+router.get('/user', viewUserProfile); // Route for viewing a user profile by name
 router.post('/follow', followUser);
-router.get('/profile', getProfile);
+router.get('/', getProfile);
 router.post('/follow', followUser); // Follow a user or company
 router.post('/unfollow', unfollowUser); // Unfollow a user or company
 
