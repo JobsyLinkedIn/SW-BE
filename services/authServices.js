@@ -186,7 +186,8 @@ const forgotPassword = async (email) => {
     expiresIn: '15m',
   });
 
-  const resetLink = `${process.env.BACKEND_URL}/api/auth/reset-password?token=${token}`;
+  const productionResetLink = `http://jobsy.duckdns.org:5000/resetpassword?token=${token}`;
+  const developmentResetLink = `http://localhost:5177/resetpassword?token=${token}`;
 
   await transporter.sendMail({
     from: process.env.EMAIL_USER,
@@ -196,19 +197,15 @@ const forgotPassword = async (email) => {
       <div style="font-family: Arial, sans-serif; max-width: 600px; padding: 20px; border: 1px solid #ddd; border-radius: 10px;">
         <h2 style="color: #0073e6;">Reset Your Password 🔑</h2>
         <p>Dear ${user.name},</p>
-        <p>We received a request to reset your password. Click the button below to reset it:</p>
-        <p style="text-align: center;">
-          <a href="${resetLink}" 
-             style="background-color: #0073e6; color: white; padding: 10px 20px; text-decoration: none; font-weight: bold; border-radius: 5px;">
-             Reset Password
-          </a>
-        </p>
+        <p>We received a request to reset your password. Use one of the links below to reset it:</p>
+        <p><strong>Production:</strong> <a href="${productionResetLink}">${productionResetLink}</a></p>
+        <p><strong>Local Development:</strong> <a href="${developmentResetLink}">${developmentResetLink}</a></p>
         <p>This link will expire in 15 minutes. If you did not request this, please ignore this email.</p>
         <hr>
         <p style="font-size: 14px; color: gray;">
           Best Regards, <br>
           <strong>Karim Mohamed</strong> <br>
-          Backend Engineer | Jobsy <br>
+          Jobsy <br>
           Need help? Contact us at <a href="mailto:support@jobsy.com">support@jobsy.com</a>
         </p>
       </div>

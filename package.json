@@ -36,6 +36,8 @@
   },
   "devDependencies": {
     "jest": "^29.7.0",
-    "prettier": "^3.5.2"
+    "mockingoose": "^2.16.2",
+    "prettier": "^3.5.2",
+    "supertest": "^7.1.0"
   }
 }
