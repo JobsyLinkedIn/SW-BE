@@ -139,7 +139,9 @@ export const getAllMessageRequests = async (req, res) => {
 
 export const get_list_blocked = async (req, res) => {
   try {
-      const userId = req.params.userId; 
+      const userId = req.user._id;
+      // console.log("debug",userId);
+
       const blockedUsers = await getBlockedUsers(userId); 
 
       res.status(200).json(blockedUsers);

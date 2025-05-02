@@ -3,7 +3,7 @@ import UserDetails from "../../models/user_details.js";
 export const getBlockedUsers = async (userId) => {
     try {
         const userDetails = await UserDetails.findOne({ user: userId }).populate('blockedUsers');
-
+        console.log("debug",userId);
         if (!userDetails) {
             throw new Error('User not found');
         }
