@@ -16,14 +16,14 @@ const register = async (req, res) => {
   const { name, email, password, captchaToken } = req.body;
 
    try {
-      //  if (!captchaToken) {
-      //     return res.status(400).json({ msg: "CAPTCHA verification failed" });
-      //   }
+       if (!captchaToken) {
+          return res.status(400).json({ msg: "CAPTCHA verification failed" });
+        }
 
-      //   const isHuman = await authService.verifyCaptcha(captchaToken);
-      //   if (!isHuman) {
-      //     return res.status(400).json({ msg: "CAPTCHA verification failed" });
-      //   }
+        const isHuman = await authService.verifyCaptcha(captchaToken);
+        if (!isHuman) {
+          return res.status(400).json({ msg: "CAPTCHA verification failed" });
+        }
 
      const response = await authService.registerUser({ name, email, password });
      res.status(201).json(response);
