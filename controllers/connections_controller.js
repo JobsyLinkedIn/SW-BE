@@ -88,7 +88,8 @@ export const get_connections = async (req, res) => {
 };
 export const get_pending_requests = async (req, res) => {
   try {
-    const { email } = req.body;
+    // const { email } = req.body;
+    const email = req.query.email;
     const result = await get_pending_requests_service(email);
     res.status(200).json(result);
   } catch (error) {
