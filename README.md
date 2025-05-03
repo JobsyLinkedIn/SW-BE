@@ -20,3 +20,6 @@ node server.js
 1-npm install --save-dev eslint eslint-plugin-prettier eslint-plugin-unicorn --legacy-peer-deps (download this from terminal)
 
 2-npx eslint . --fix (run this command always before pushing your code to main)
+
+# run tests at directory
+ npx jest --testPathPattern="tests/foldername/.*\.test\.js" 
