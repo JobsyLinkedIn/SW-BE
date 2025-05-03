@@ -4,15 +4,14 @@ FROM node:18-alpine
 # Set the working directory inside the container
 WORKDIR /app
 
-# Copy package.json and install dependencies (cache layer)
+# Copy package.json and package-lock.json
 COPY package*.json ./
 
-
-RUN npm install 
+# Install only production dependencies
+RUN npm install --omit=dev
 
 # Copy the entire application code
 COPY . .
-
 
 # Expose the port your server uses (e.g., 3000)
 EXPOSE 3000
