@@ -21,13 +21,11 @@ pipeline {
 
         stage('Prepare .env') {
             steps {
-                // pull your .env text into ENV_CONTENTS
                 withCredentials([string(credentialsId: 'env-vars-jobsy', variable: 'ENV_CONTENTS')]) {
                     sh '''#!/bin/bash
-                      echo "Writing .env from Jenkins secret..."
-                      # write the multi‑line secret into .env
-                      printf "%s\n" "$ENV_CONTENTS" > .env
-                      chmod 600 .env
+                        echo "Writing .env from Jenkins secret..."
+                        printf "%s\n" "$ENV_CONTENTS" > .env
+                        chmod 600 .env
                     '''
                 }
             }
@@ -56,9 +54,9 @@ pipeline {
                     passwordVariable: 'DOCKER_PASSWORD'
                 )]) {
                     sh '''#!/bin/bash
-                      echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
-                      docker tag backend ${DOCKER_IMAGE}
-                      docker push ${DOCKER_IMAGE}
+                        echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+                        docker tag backend ${DOCKER_IMAGE}
+                        docker push ${DOCKER_IMAGE}
                     '''
                 }
             }
@@ -67,17 +65,25 @@ pipeline {
         stage('Deploy to Azure') {
             steps {
                 sh """#!/bin/bash
-                  ssh -i ${AZURE_SSH_KEY} ${AZURE_USERNAME}@${AZURE_SERVER_IP} '
-                    if [ -d "${WORK_DIR}" ]; then
-                      echo "Directory exists, pulling latest changes"
-                      cd "${WORK_DIR}" && git pull origin main && docker-compose down && \
-                      docker ps -aq -f name=mongo | xargs -r docker rm -f && \
-                      docker-compose up -d
-                    else
-                      echo "Cloning repository"
-                      git clone ${REPO_URL} ${WORK_DIR} && cd ${WORK_DIR} && docker-compose up -d
-                    fi
-                  '
+                    ssh -i ${AZURE_SSH_KEY} ${AZURE_USERNAME}@${AZURE_SERVER_IP} '
+                        set -e
+                        if [ -d "${WORK_DIR}" ]; then
+                            echo "Directory exists, pulling latest changes..."
+                            cd "${WORK_DIR}"
+                            git pull origin main
+
+                            echo "Rebuilding only the backend image..."
+                            docker-compose build backend
+
+                            echo "Restarting only the backend container..."
+                            docker-compose up -d backend
+                        else
+                            echo "First-time setup: cloning repo and starting all services..."
+                            git clone ${REPO_URL} ${WORK_DIR}
+                            cd ${WORK_DIR}
+                            docker-compose up -d
+                        fi
+                    '
                 """
             }
         }
@@ -85,11 +91,10 @@ pipeline {
 
     post {
         success {
-            echo 'Build and deployment completed successfully!'
+            echo ' Build and deployment completed successfully!'
         }
         failure {
-            echo 'Build or deployment failed!'
+            echo ' Build or deployment failed!'
         }
     }
 }
-
