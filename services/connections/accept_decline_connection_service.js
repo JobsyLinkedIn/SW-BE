@@ -1,6 +1,6 @@
 import User from '../../models/user.js';
 
-export const accept_decline_connection_service = async (receiverEmail, senderEmail, action) => {
+export const accept_decline_connection_service = async (senderEmail,receiverEmail , action) => {
   try {
     const receiver = await User.findOne({ email: receiverEmail });
     const sender = await User.findOne({ email: senderEmail });
@@ -8,7 +8,6 @@ export const accept_decline_connection_service = async (receiverEmail, senderEma
     if (!receiver || !sender) {
       throw new Error('One or both users not found');
     }
-
     if (!receiver.pendingRequests.includes(sender._id)) {
       throw new Error('No pending request from this user');
     }
