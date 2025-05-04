@@ -65,38 +65,22 @@ pipeline {
         stage('Deploy to Azure') {
             steps {
                 sshagent(['azure-server-ssh']) {
+                    // 1) Copy .env up-to-date
                     sh """
-                      echo 'Deploying to Azure...'
-                      
-                      # Transfer the updated .env to the server
                       scp -o StrictHostKeyChecking=no .env \\
-                        ${AZURE_USERNAME}@${AZURE_SERVER_IP}:${WORK_DIR}/.env
+                          ${AZURE_USERNAME}@${AZURE_SERVER_IP}:${WORK_DIR}/.env
+                    """
 
-                      # Run the deployment script remotely
+                    // 2) Run all commands inline over SSH
+                    sh """
                       ssh -o StrictHostKeyChecking=no -i ${AZURE_SSH_KEY} \\
-                        ${AZURE_USERNAME}@${AZURE_SERVER_IP} << 'EOF'
-                        set -e
-
-                        if [ -d "${WORK_DIR}" ]; then
-                          echo "Directory exists, pulling latest changes..."
-                          cd "${WORK_DIR}"
-                          git pull origin main
-
-                          echo "Rebuilding only the backend image..."
-                          docker-compose build backend
-
-                          echo "Removing old backend container (if any)…"
-                          docker rm -f backend || true
-
-                          echo "Starting backend container…"
-                          docker-compose up -d --no-deps backend
-                        else
-                          echo "First-time setup: cloning repo and starting all services..."
-                          git clone ${REPO_URL} ${WORK_DIR}
-                          cd ${WORK_DIR}
-                          docker-compose up -d
-                        fi
-                        EOF
+                        ${AZURE_USERNAME}@${AZURE_SERVER_IP} \\
+                        "set -e && \\
+                         cd ${WORK_DIR} && \\
+                         git pull origin main && \\
+                         docker-compose build backend && \\
+                         docker rm -f backend || true && \\
+                         docker-compose up -d --no-deps backend"
                     """
                 }
             }
