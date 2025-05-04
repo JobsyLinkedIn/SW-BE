@@ -494,7 +494,7 @@ const getPostCommentsService = async (postId, userId = null, page, limit) => {
     Comment.countDocuments(queryCondition),
     Comment.find(queryCondition)
       .populate('author', 'name profilePicture')
-      .populate('refProfile', 'name')
+      .populate('refProfile', 'name profilePicture')
       .populate('taggedUsers', 'name')
       .sort({ createdAt: -1 })
       .skip((page - 1) * limit)
