@@ -493,9 +493,9 @@ const getPostCommentsService = async (postId, userId = null, page, limit) => {
   const [totalComments, comments] = await Promise.all([
     Comment.countDocuments(queryCondition),
     Comment.find(queryCondition)
-      .populate('author', 'username profilePicture')
-      .populate('refProfile', 'displayName')
-      .populate('taggedUsers', 'username')
+      .populate('author', 'name profilePicture')
+      .populate('refProfile', 'name')
+      .populate('taggedUsers', 'name')
       .sort({ createdAt: -1 })
       .skip((page - 1) * limit)
       .limit(limit)
