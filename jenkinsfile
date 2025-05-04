@@ -5,7 +5,6 @@ pipeline {
         IMAGE_NAME      = 'backend'
         REGISTRY        = 'docker.io'
         DOCKER_IMAGE    = "${REGISTRY}/${IMAGE_NAME}:latest"
-        AZURE_SSH_KEY   = '/var/jenkins_home/.ssh/JOBSY-UBUNTU.pem'
         AZURE_SERVER_IP = '74.162.41.144'
         AZURE_USERNAME  = 'kassem'
         REPO_URL        = 'git@github.com:JobsyLinkedIn/SW-BE.git'
@@ -22,11 +21,20 @@ pipeline {
         stage('Prepare .env') {
             steps {
                 withCredentials([string(credentialsId: 'env-vars-jobsy', variable: 'ENV_CONTENTS')]) {
+                    // Write .env locally
                     sh '''#!/bin/bash
                         echo "Writing .env from Jenkins secret..."
                         printf "%s\\n" "$ENV_CONTENTS" > .env
                         chmod 600 .env
                     '''
+
+                    // Copy .env to Azure server via SCP using SSH credentials
+                    sshagent(['azure-server-ssh']) {
+                        sh '''
+                            echo "Transferring .env to Azure server..."
+                            scp -o StrictHostKeyChecking=no .env ${AZURE_USERNAME}@${AZURE_SERVER_IP}:${WORK_DIR}/.env
+                        '''
+                    }
                 }
             }
         }
@@ -39,7 +47,6 @@ pipeline {
 
         stage('Run Tests') {
             steps {
-                // Avoid recreating mongo container by skipping dependencies
                 sh 'echo "No tests defined"'
             }
         }
@@ -65,37 +72,40 @@ pipeline {
 
         stage('Deploy to Azure') {
             steps {
-                sh """#!/bin/bash
-                    ssh -i ${AZURE_SSH_KEY} ${AZURE_USERNAME}@${AZURE_SERVER_IP} '
-                        set -e
-                        if [ -d "${WORK_DIR}" ]; then
-                            echo "Directory exists, pulling latest changes..."
-                            cd "${WORK_DIR}"
-                            git pull origin main
+                sshagent(['azure-server-ssh']) {
+                    sh """#!/bin/bash
+                        echo "Deploying to Azure server..."
+                        ssh -o StrictHostKeyChecking=no ${AZURE_USERNAME}@${AZURE_SERVER_IP} '
+                            set -e
+                            if [ -d "${WORK_DIR}" ]; then
+                                echo "Directory exists, pulling latest changes..."
+                                cd "${WORK_DIR}"
+                                git pull origin main
 
-                            echo "Rebuilding only the backend image..."
-                            docker-compose build backend
+                                echo "Rebuilding backend..."
+                                docker-compose build backend
 
-                            echo "Restarting only the backend container..."
-                            docker-compose up -d backend
-                        else
-                            echo "First-time setup: cloning repo and starting all services..."
-                            git clone ${REPO_URL} ${WORK_DIR}
-                            cd ${WORK_DIR}
-                            docker-compose up -d
-                        fi
-                    '
-                """
+                                echo "Restarting backend container..."
+                                docker-compose up -d backend
+                            else
+                                echo "Cloning repository and starting services..."
+                                git clone ${REPO_URL} ${WORK_DIR}
+                                cd ${WORK_DIR}
+                                docker-compose up -d
+                            fi
+                        '
+                    """
+                }
             }
         }
     }
 
     post {
         success {
-            echo 'Build and deployment completed successfully!'
+            echo ' Build and deployment completed successfully!'
         }
         failure {
-            echo 'Build or deployment failed!'
+            echo ' Build or deployment failed!'
         }
     }
 }
