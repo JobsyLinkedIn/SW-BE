@@ -1,4 +1,42 @@
-import 'dotenv/config';
+// --- 1. Load environment variables from .env ---
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+// Get __dirname equivalent in ES modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Define path to .env file
+const ENV_FILE = path.resolve(__dirname, '.env');
+
+// Read and parse the .env file manually
+const envConfig = {};
+fs.readFileSync(ENV_FILE, 'utf-8')
+  .split('\n')
+  .map(line => line.trim())
+  .filter(line => line && !line.startsWith('#'))
+  .forEach(line => {
+    const [key, ...rest] = line.split('=');
+    const value = rest.join('=').replace(/^"(.*)"$/, '$1').replace(/^'(.*)'$/, '$1');
+    envConfig[key] = value;
+  });
+
+// Optional: Log loaded variables for debugging
+console.log('✅ Loaded environment variables:', envConfig);
+
+// Set them into process.env
+Object.entries(envConfig).forEach(([key, value]) => {
+  if (!(key in process.env)) {
+    process.env[key] = value;
+  }
+});
+// --- End of environment loading ---
+
+console.log("PORT:", process.env.PORT);
+console.log("MONGO_URI:", process.env.MONGO_URI);
+
+// --- 2. Now proceed with the rest of server setup ---
 import express from 'express';
 import cors from 'cors';
 import connectDB from './db.js';
@@ -12,7 +50,6 @@ import subscriptionPlanRoutes from './routes/subscriptionPlanRoutes.js';
 import swaggerUi from 'swagger-ui-express';
 import swaggerDocument from './swagger_output.json' with { type: 'json' };
 import stripePaymentRoutes from './routes/stripePayment/stripePaymentRouter.js';
-
 import NotificationRoutes from './routes/notification.js';
 import http from 'http';
 import { Server as SocketIOServer } from 'socket.io';
@@ -32,7 +69,8 @@ import {
 import messagesRoutes from './routes/messagesRoutes.js';
 import conversationRoutes from './routes/conversationRoutes.js';
 import commentsRoutes from './routes/commentsRoutes.js';
-import e from 'cors';
+
+// Create Express app and HTTP server
 const app = express();
 const PORT = process.env.PORT || 3000;
 const server = http.createServer(app);
@@ -42,65 +80,64 @@ const io = new SocketIOServer(server, {
   },
 });
 
-// Initialize  conversationsTypingStatus with cleanup interval
+// Initialize conversations typing status
 const conversationsTypingStatus = {}; // Structure: { "conv1": { "user1": true, "user2": false }, ... }
-setInterval(
-  () => {
-    // Clean up empty conversations weekly
-    for (const convId in conversationsTypingStatus) {
-      if (Object.keys(conversationsTypingStatus[convId]).length === 0) {
-        delete conversationsTypingStatus[convId];
-      }
+
+// Weekly cleanup of empty conversations
+setInterval(() => {
+  for (const convId in conversationsTypingStatus) {
+    if (Object.keys(conversationsTypingStatus[convId]).length === 0) {
+      delete conversationsTypingStatus[convId];
     }
-  },
-  3 * 60 * 60 * 1000
-); // Weekly cleanup
+  }
+}, 3 * 60 * 60 * 1000); // Every 3 hours
 
 // Socket.IO middleware for authentication
-//Ensures only authenticated users can establish WebSocket connections
 io.use(authenticateSocket);
 
+// Attach io to req object for use in routes
 app.use((req, res, next) => {
   req.io = io;
   next();
 });
 
+// Handle socket connections
 io.on('connection', (socket) => {
-  console.log(' A user connected: ' + socket.id);
-  console.log(' A user connected: ' + socket.request.user.userId);
-  socket.join(socket.request.user.userId);
-  // Join a room named with their user ID
+  console.log('A user connected:', socket.id);
+  const userId = socket.request.user?.userId;
+  if (userId) {
+    console.log('User ID:', userId);
+    socket.join(userId);
+  }
+
   socket.on('join', (userId) => {
     socket.join(userId);
   });
 
   socket.on('disconnect', () => {
-    console.log(' User disconnected: ' + socket.id);
+    console.log('User disconnected:', socket.id);
   });
 
-  // Join a conversation
   socket.on('joinConversation', (conversationId) => {
     handleJoinConversation(socket, conversationId);
   });
 
-  // Leave a conversation
   socket.on('leaveConversation', (conversationId) => {
-    socket.leave(conversationId);
+    handleleaveConversation(socket, conversationId);
   });
 
-  // Send Message
   socket.on('sendMessage', async (messageData) => {
     await handleSendMessage(socket, io, messageData);
   });
-  // Handle typing indicator
+
   socket.on('typing', async ({ conversationId, isTyping }) => {
     await handleTypingStatus(socket, io, conversationsTypingStatus, { conversationId, isTyping });
   });
 
-  // Handle read receipts
   socket.on('markAsRead', async (messageIds) => {
     await handleMarkAsRead(socket, io, messageIds);
   });
+
   socket.on('auth_error', (message) => {
     console.error(message);
   });
@@ -109,37 +146,33 @@ io.on('connection', (socket) => {
 // Middleware
 app.use(express.json());
 app.use(cors()); // Enable CORS for frontend requests
+
 // Connect to MongoDB
 connectDB();
 
 // Routes
 app.use('/api/auth', authRoutes); // Authentication routes
 app.use('/api/user/profile', profileRoutes); // Profile routes
-app.use('/api/posts', postRoutes); //Posts Routes
-app.use('/api/user/actions', userActionsRoutes); //User Actions Route
+app.use('/api/posts', postRoutes); // Posts Routes
+app.use('/api/user/actions', userActionsRoutes); // User Actions Route
 app.use('/api/users', connectionRoutes);
 app.use('/api/subscription-plan', subscriptionPlanRoutes);
 app.use('/api/subscription-plan-payment', stripePaymentRoutes);
-app.use('/api/notifications', NotificationRoutes); //Notifications Route
+app.use('/api/notifications', NotificationRoutes); // Notifications Route
 app.use('/api', companyRoutes);
 app.use('/api/privacy', privacyRoutes);
-app.use('/api/admin', adminRoutes); // Connection routes
+app.use('/api/admin', adminRoutes); // Admin routes
 app.use('/api/report', reportRoutes); // Report routes
 app.use('/api/jobs', jobroutes); // Job routes
-app.use('/api/messages', messagesRoutes); //messages routes
-app.use('/api/conversation', conversationRoutes); //conversation routes
-app.use('/api/comments', commentsRoutes);
+app.use('/api/messages', messagesRoutes); // Messages routes
+app.use('/api/conversation', conversationRoutes); // Conversation routes
+app.use('/api/comments', commentsRoutes); // Comments routes
 
-// 🔴 Place this at the end (AFTER routes)
+// Error handler - must be last
 app.use(errorHandler);
 
-/*
-// Error handling middleware
-app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).send('Something broke!');
-});
-*/
 // Swagger UI
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
-server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+
+// Start the server
+server.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
