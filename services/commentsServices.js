@@ -172,9 +172,9 @@ const getCommentRepliesService = async (parentCommentId, userId = null) => {
   const replies = await Comment.find({
     _id: { $in: parentComment.replies },
   })
-    .populate('author', 'username profilePicture')
-    .populate('refProfile', 'displayName')
-    .populate('taggedUsers', 'username')
+    .populate('author', 'name profilePicture')
+    .populate('refProfile', 'name profilePicture')
+    .populate('taggedUsers', 'name')
     .sort({ createdAt: 1 }) // Oldest first (common for replies)
     .lean();
 
