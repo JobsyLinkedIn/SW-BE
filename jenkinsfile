@@ -78,8 +78,11 @@ pipeline {
                           echo "Rebuilding only the backend image..."
                           docker-compose build backend
 
-                          echo "Force-recreating only the backend container..."
-                          docker-compose up -d --no-deps --force-recreate backend
+                          echo "Removing old backend container (if any)…"
+                          docker rm -f backend || true
+
+                          echo "Starting backend container…"
+                          docker-compose up -d --no-deps backend
                         else
                           echo "First-time setup: cloning repo and starting all services..."
                           git clone ${REPO_URL} ${WORK_DIR}
