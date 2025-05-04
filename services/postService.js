@@ -478,21 +478,29 @@ const getPostCommentsService = async (postId, page, limit) => {
 };
 */
 
-const getPostCommentsService = async (postId, userId = null) => {
+const getPostCommentsService = async (postId, userId = null, page, limit) => {
   if (!areValidObjectIds([postId])) {
     throw new Error('Invalid post ID');
   }
 
-  // Get only root-level comments (comments not in any reply array)
-  const comments = await Comment.find({
+  // Create the base query condition
+  const queryCondition = {
     post: postId,
-    _id: { $nin: await Comment.distinct('replies') }, // Only comments not referenced as replies
-  })
-    .populate('author', 'username profilePicture')
-    .populate('refProfile', 'displayName')
-    .populate('taggedUsers', 'username')
-    .sort({ createdAt: -1 }) // Newest first
-    .lean();
+    _id: { $nin: await Comment.distinct('replies') } // Only root-level comments
+  };
+
+  // Get total count and paginated comments in parallel
+  const [totalComments, comments] = await Promise.all([
+    Comment.countDocuments(queryCondition),
+    Comment.find(queryCondition)
+      .populate('author', 'username profilePicture')
+      .populate('refProfile', 'displayName')
+      .populate('taggedUsers', 'username')
+      .sort({ createdAt: -1 })
+      .skip((page - 1) * limit)
+      .limit(limit)
+      .lean()
+  ]);
 
   // Add isLiked status if user is authenticated
   if (userId) {
@@ -503,7 +511,11 @@ const getPostCommentsService = async (postId, userId = null) => {
     );
   }
 
-  return comments;
+  return {
+    totalComments,
+    totalPages: Math.ceil(totalComments / limit),
+    comments
+  };
 };
 
 const getPostLikesService = async (postId, page = 1, limit = 10) => {

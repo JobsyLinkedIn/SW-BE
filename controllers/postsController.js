@@ -255,9 +255,9 @@ const getPostCommentsCtrl = asyncHandler(async (req, res) => {
   limit = parseInt(limit);
 
   // ✅ Call Service
-  const Comments = await getPostCommentsService(postId, userId);
+  const { totalComments, totalPages, comments } = await getPostCommentsService(postId,userId, page, limit);
 
-  res.status(200).json(Comments);
+  res.status(200).json({ totalComments, page, totalPages, comments });
 });
 
 /**
