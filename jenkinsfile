@@ -24,7 +24,7 @@ pipeline {
                 withCredentials([string(credentialsId: 'env-vars-jobsy', variable: 'ENV_CONTENTS')]) {
                     sh '''#!/bin/bash
                       echo "Writing .env from Jenkins secret..."
-                      printf "%s\\n" "$ENV_CONTENTS" > .env
+                      printf "%s\n" "$ENV_CONTENTS" > .env
                       chmod 600 .env
                     '''
                 }
@@ -67,7 +67,14 @@ pipeline {
                 sshagent(['azure-server-ssh']) {
                     sh """
                       echo 'Deploying to Azure...'
-                      ssh -i ${AZURE_SSH_KEY} ${AZURE_USERNAME}@${AZURE_SERVER_IP} 'bash -s' <<'ENDSSH'
+                      
+                      # Transfer the updated .env to the server
+                      scp -o StrictHostKeyChecking=no .env \\
+                        ${AZURE_USERNAME}@${AZURE_SERVER_IP}:${WORK_DIR}/.env
+
+                      # Run the deployment script remotely
+                      ssh -o StrictHostKeyChecking=no -i ${AZURE_SSH_KEY} \\
+                        ${AZURE_USERNAME}@${AZURE_SERVER_IP} << 'EOF'
                         set -e
 
                         if [ -d "${WORK_DIR}" ]; then
@@ -89,7 +96,7 @@ pipeline {
                           cd ${WORK_DIR}
                           docker-compose up -d
                         fi
-                      ENDSSH
+                        EOF
                     """
                 }
             }
