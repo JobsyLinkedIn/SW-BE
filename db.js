@@ -12,7 +12,7 @@ const connectDB = async () => {
 
     await mongoose.connect(mongoURI);
 
-    console.log(`MongoDB connected to database: ${mongoURI.split('/').pop()}`);
+    //console.log(`MongoDB connected to database: ${mongoURI.split('/').pop()}`);
   } catch (err) {
     console.error('MongoDB connection error:', err.message);
     process.exit(1);
