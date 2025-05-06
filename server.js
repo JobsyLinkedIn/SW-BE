@@ -1,43 +1,4 @@
-// --- 1. Load environment variables from .env ---
-import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
-
-// Get __dirname equivalent in ES modules
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-// Define path to .env file
-const ENV_FILE = path.resolve(__dirname, '.env');
-
-// Read and parse the .env file manually
-const envConfig = {};
-fs.readFileSync(ENV_FILE, 'utf-8')
-  .split('\n')
-  .map(line => line.trim())
-  .filter(line => line && !line.startsWith('#'))
-  .forEach(line => {
-    const [key, ...rest] = line.split('=');
-    const value = rest.join('=').replace(/^"(.*)"$/, '$1').replace(/^'(.*)'$/, '$1');
-    envConfig[key] = value;
-  });
-
-// Optional: Log loaded variables for debugging
-//console.log('✅ Loaded environment variables:', envConfig);
-
-// Set them into process.env
-//Object.entries(envConfig).forEach(([key, value]) => {
-//  if (!(key in process.env)) {
-//    process.env[key] = value;
-//  }
-//});
-// --- End of environment loading ---
-
-//console.log("PORT:", process.env.PORT);
-//console.log("MONGO_URI:", process.env.MONGO_URI);
-//
-
-// --- 2. Now proceed with the rest of server setup ---
+// --- 1. Import dependencies and setup server ---
 import express from 'express';
 import cors from 'cors';
 import connectDB from './db.js';
@@ -176,4 +137,6 @@ app.use(errorHandler);
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 // Start the server
-server.listen(PORT);
+server.listen(PORT, '0.0.0.0', () => {
+  console.log(`✅ Server running on port ${PORT}`);
+});
