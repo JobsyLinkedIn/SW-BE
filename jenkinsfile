@@ -21,18 +21,16 @@ pipeline {
 
         stage('Prepare .env') {
             steps {
-                withCredentials([string(credentialsId: 'env-vars-jobsy', variable: 'ENV_CONTENTS')]) {
-                    sh '''#!/bin/bash
-                    echo "=== Debug: Raw ENV_CONTENTS (may be multiline) ==="
-                    printf 'Line: %s\n' "$ENV_CONTENTS"
+                withCredentials([file(credentialsId: 'env-vars-jobsy-file', variable: 'ENV_FILE')]) {
+                    sh '''
+                        echo "=== Copying .env from credential ==="
+                        cp "$ENV_FILE" .env
+                        chmod 600 .env
 
-                    echo -e "\\n=== Writing .env file ==="
-                    printf '%s\n' "$ENV_CONTENTS" > .env
-
-                    echo -e "\\n=== Contents of .env ==="
-                    cat .env
+                        echo "=== Contents of .env ==="
+                        cat .env
                     '''
-                }
+                } 
             }
         }
 
