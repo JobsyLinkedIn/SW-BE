@@ -23,14 +23,14 @@ fs.readFileSync(ENV_FILE, 'utf-8')
   });
 
 // Optional: Log loaded variables for debugging
-console.log('✅ Loaded environment variables:', envConfig);
+//console.log('✅ Loaded environment variables:', envConfig);
 
 // Set them into process.env
-Object.entries(envConfig).forEach(([key, value]) => {
-  if (!(key in process.env)) {
-    process.env[key] = value;
-  }
-});
+//Object.entries(envConfig).forEach(([key, value]) => {
+//  if (!(key in process.env)) {
+//    process.env[key] = value;
+//  }
+//});
 // --- End of environment loading ---
 
 //console.log("PORT:", process.env.PORT);
